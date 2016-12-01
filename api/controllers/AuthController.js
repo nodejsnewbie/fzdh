@@ -88,6 +88,7 @@ var AuthController = {
    * @param {Object} res
    */
   register: function (req, res) {
+    console.log("register req: " +req);
     res.view({
       errors: req.flash('error')
     });
@@ -157,13 +158,22 @@ var AuthController = {
       }
 
       req.login(user, function (err) {
-        if (err) {
-          return tryAgain();
-        }
+        // if (err) {
+        //   return tryAgain();
+        // }
 
         // Upon successful login, send the user to the homepage were req.user
         // will available.
-        res.redirect('/');
+        // res.redirect('/');
+        console.log(user);
+        var userID = user.id;
+        Passport.find({user: userID}, function(err, items){
+          if(err) return err;
+
+          console.log(items[0].accessToken);
+          // Make sure you dont give them any sensetive data
+          res.json({userData: user, token: items[0].accessToken});
+        });
       });
     });
   },

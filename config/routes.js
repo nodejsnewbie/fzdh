@@ -38,11 +38,16 @@ module.exports.routes = {
 
   'get /auth/:provider': 'AuthController.provider',
   'get /auth/:provider/callback': 'AuthController.callback',
-  'get /auth/:provider/:action': 'AuthController.callback'
+  'get /auth/:provider/:action': 'AuthController.callback',
 
   // Custom routes here...
-
-
+  '/importPreferenceseFromExcelToDb':{
+    view: 'uploadfile'  // view 'uploadfile' in views directory will loaded automatically
+  },
+  '/importUserPreferenceseFromExcelToDb':{
+    view: 'importUserPreference'  // view 'uploadfile' in views directory will loaded automatically
+  },
+  'get /version': 'SystemController.version'
   // If a request to a URL doesn't match any of the custom routes above,
   // it is matched against Sails route blueprints.  See `config/blueprints.js`
   // for configuration options and examples.
