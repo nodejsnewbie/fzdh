@@ -169,10 +169,14 @@ var AuthController = {
         var userID = user.id;
         Passport.find({user: userID}, function(err, items){
           if(err) return err;
-
-          console.log(items[0].accessToken);
-          // Make sure you dont give them any sensetive data
-          res.json({userData: user, token: items[0].accessToken});
+          if(items[0]){
+            console.log(items[0].accessToken);
+            // Make sure you dont give them any sensetive data
+            res.json({userData: user, token: items[0].accessToken});
+          }
+          else {
+            res.json({succeed:false, erro: 'invalid password'});
+          }
         });
       });
     });

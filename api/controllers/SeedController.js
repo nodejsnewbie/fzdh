@@ -50,15 +50,15 @@ module.exports = {
 	// 	});
 	// },
 
-  bios: function(req, res) {
+  preferences: function(req, res) {
     User.find({})
+      .populate('preferences')
       .then(function (users) {
-        console.log("users = ",users);
         var bs = [];
         users.forEach(function (user) {
           bs.push({
-            name: user.fullName,
-            bio: user.bio
+            email: user.email,
+            category: user.preferences
           });
         });
         res.json(bs);
@@ -121,7 +121,7 @@ module.exports = {
                     }
 
                   });
-                })
+                });
                 return res.send("Database seeded:"+ i);
                 // var author=result[0];
                 // Author.create(author).exec(function (err, created) {
@@ -175,59 +175,37 @@ module.exports = {
             if(err) {
               return res.json({error_code:1,err_desc:err, data: null});
             }
-            // res.json({error_code:0,err_desc:null, data: result});
-            var i=0;
             result.forEach(function(userPreference){
-              // sails.log('userPreference email: "%s"', userPreference.email);
-              var obj={};
-              obj.email=userPreference.email;
-              var user;
-              User.findOne({email:userPreference.email}).exec(function (err, finn){
-                if (err) {
-                  return res.serverError(err);
-                }
-                if (!finn) {
-                  sails.log('Could not find'+userPreference.email+', sorry.');
-                 } else {
-                  sails.log('Found "%s"', finn.email);
-                  user=finn;
-                }
+          Preference.findOne({category:userPreference.preference}).then(function (category){
+            if (!category) {
+              sails.log('Could not find'+userPreference.preference+', sorry.');
+            } else {
+              User.findOne({email:userPreference.email}).then(function (user) {
+                // Queue up a new pet to be added and a record to be created in the join table
+                sails.log(userPreference);
+                sails.log('Found "%s"', category);
+                sails.log('Found "%s"', user);
+                user.preferences.add(category);
+                // Save the user, creating the new userPreference and associations in the join table
+                user.save(function(err) {
+                  sails.log('save error:');
+                  sails.log(err);
+                  return     res.json({ error: err });
+                });
               });
-              if(user){
-                sails.log('user email "%s"', user.email);
-                var category={};
-                category.category=userPreference.preference;
-                Preference.findone(category).exec(function (err,found) {
-                  if(err){
-                    return res.serverError(err);
-                  }
-                  var preference=found;
-                  sails.log('preference category "%s"', preference.category);
-                  // Queue up a new pet to be added and a record to be created in the join table
-                  user.preferences.add(preference);
-                  // Save the user, creating the new userPreference and associations in the join table
-                  user.save(function(err) {
-                    return res.serverError(err);
-                  });
-                })
-              }
-
-            })
-            return res.send("Database seeded:"+ i);
-            // var author=result[0];
-            // Author.create(author).exec(function (err, created) {
-            //     return res.send("Database seeded");
-            // });
+            }
+          }) .catch(function (err) {
+            sails.log(err);
+            return     res.status(500)
+              .json({ error: err });
           });
-        } catch (e){
-          res.json({error_code:1,err_desc:"Corupted excel file"});
-        }
-
-        //
-        // res.json({ status: 200, file: files ,fileName:fileName,exceltojson:exceltojson.toString()});
+        });
+        return res.send("Database seeded:"+ i);
       });
-    },
-
-
+  } catch (e){
+    return  res.json({error_code:1,err_desc:"Corupted excel file"});
+  }
+      });
+    }
 };
 
