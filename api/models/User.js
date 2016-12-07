@@ -7,7 +7,7 @@ var User = {
     email     : { type: 'email',  unique: true },
     passports : { collection: 'Passport', via: 'user' },
     preferences: {
-      collection: 'preference',
+      collection: 'Category',
       via: 'fans',
       dominant:true
     }

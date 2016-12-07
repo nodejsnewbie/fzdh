@@ -47,8 +47,12 @@ module.exports.routes = {
   '/importUserPreferenceseFromExcelToDb':{
     view: 'importUserPreference'  // view 'uploadfile' in views directory will loaded automatically
   },
+  '/importLinksFromExcelToDb': {
+    view: 'importLinks'
+  },
   'get /version': 'SystemController.version',
-  'get /preference/:id': 'PreferenceController.preference'
+  'get /preference/:id': 'CategoryController.preference',
+  'get /category/:id/links': 'CategoryController.categoryList'
   // If a request to a URL doesn't match any of the custom routes above,
   // it is matched against Sails route blueprints.  See `config/blueprints.js`
   // for configuration options and examples.

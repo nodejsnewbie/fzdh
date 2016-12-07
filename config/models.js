@@ -13,6 +13,7 @@ module.exports.models = {
   //
   // (defaults to localDiskDb)
   connection: 'someMongodbServer',
-  migrate: 'alter'
+  // migrate: 'alter'
+  migrate: 'drop'
 
 };

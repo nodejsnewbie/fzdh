@@ -6,6 +6,98 @@
  */
 var xlstojson = require("xls-to-json-lc");
 var xlsxtojson = require("xlsx-to-json-lc");
+function processPreference(preference) {
+  console.log(preference);
+  Category.create(preference).exec(function (err, created) {
+    var i=0;
+    if (err) {
+      console.log(preference);
+      console.log(err);
+    } else {
+      console.log(created);
+    }
+  });
+}
+function addToCollection(category, preference) {
+  category.links.add(preference);
+  // Save the category, creating the new link and associations in the join table
+  category.save(function (err) {
+    if (err) {
+      sails.log(err);
+      throw err;
+    }
+  });
+}
+function addLink(preference, category) {
+  var json = {};
+  json['title'] = preference.titile;
+  json['url'] = preference.url;
+  addToCollection(category, json);
+}
+function processLinks(preference) {
+  Category.findOne({category:preference.category}).then(function (category){
+    if (!category) {
+      sails.log('Could not find '+preference.category+', sorry.');
+      Category.create({category:preference.category}).then(function (created) {
+        // Queue up a new category to be added and a record to be created in the join table
+        addLink(preference, created);
+      })
+    } else {
+      // Queue up a new category to be added and a record to be created in the join table
+      // var link =
+      // sails.log(preference);
+      addLink(preference, category);
+    }
+  });
+}
+function processExcelData(file,callback) {
+  sails.log("process file: "+file.filename);
+  var exceltojson = getExcelToJson(file);
+  // sails.log("exceltojson "+exceltojson.toString());
+  exceltojson({
+      input: file.fd,
+      output: null, //since we don't need output.json
+      lowerCaseHeaders: true
+    }, function (err, result) {
+      if (err) {
+       throw err;
+      }
+      // res.json({error_code:0,err_desc:null, data: result});
+      // var i = 0;
+    if((callback && typeof(callback) === "function")){
+      result.forEach(callback);
+    } else {
+        throw new Error("invalid callback function");
+    };
+
+   })
+}
+function getExcelToJson(file) {
+  var fileName = file.filename;
+  var filePath = file.fd;
+  var exceltojson=null;
+  if (fileName.split('.')[fileName.split('.').length - 1] === 'xlsx') {
+    exceltojson = xlsxtojson;
+  } else if (fileName.split('.')[fileName.split('.').length - 1] === 'xls') {
+    exceltojson = xlstojson;
+  } else {
+    throw new Error("invalid file extension");
+  }
+  return exceltojson;
+}
+function processExcel(req, res,callback) {
+  var uploadFile = req.file('uploadFile');
+  uploadFile.upload({dirname: '../../assets/uploadFiles'}, function onUploadComplete(err, files) {
+    var file = files[0];
+    try {
+      processExcelData(file,callback);
+      return res.json({result: "Data seeded"});
+    }
+    catch (ex) {
+      return res.json({error_code: 1, err_desc: ex.toString()});
+    }
+  });
+}
 module.exports = {
   // bios: function(req, res) {
   //   Author.find({})
@@ -74,66 +166,24 @@ module.exports = {
   importPreferenceseFromExcelToDb: function(req,res){
         if (req.method === 'GET')
             return res.json({ 'status': 'GET not allowed' });
-        //	Call to /upload via GET is error
 
+        //	Call to /upload via GET is error
         var uploadFile = req.file('uploadFile');
         // console.log(uploadFile);
-
         uploadFile.upload({ dirname: '../../assets/uploadFiles' },function onUploadComplete(err, files) {
             //	Files will be uploaded to .tmp/uploads
-
-            if (err) return res.serverError(err);
-            //	IF ERROR Return and send 500 error with error
-
-            // console.log(files);
-            var file=files[0];
-            // console.log(file);
-            var fileName=file.filename;
-            var filePath=file.fd;
-            console.log(filePath);
-            if(fileName.split('.')[fileName.split('.').length-1] === 'xlsx'){
-                exceltojson = xlsxtojson;
-            } else if(fileName.split('.')[fileName.split('.').length-1] === 'xls')
-            {
-                exceltojson = xlstojson;
-
-            }else {
-                return res.end("not an valid file");
-                }
-            try {
-              exceltojson({
-                input: filePath,
-                output: null, //since we don't need output.json
-                    lowerCaseHeaders:true
-                }, function(err, result){
-                if(err) {
-                  return res.json({error_code:1,err_desc:err, data: null});
-                }
-                // res.json({error_code:0,err_desc:null, data: result});
-                var i=0;
-                result.forEach(function(preference){
-                  Preference.create(preference).exec(function (err, created) {
-                    if(err) {
-                      console.log(preference);
-                      console.log(err);
-                    } else {
-                      console.log(i++);
-                    }
-
-                  });
-                });
-                return res.send("Database seeded:"+ i);
-                // var author=result[0];
-                // Author.create(author).exec(function (err, created) {
-                //     return res.send("Database seeded");
-                // });
-              });
-            } catch (e){
-                res.json({error_code:1,err_desc:"Corupted excel file"});
-            }
-
-            //
-            // res.json({ status: 200, file: files ,fileName:fileName,exceltojson:exceltojson.toString()});
+          if (err) return res.serverError(err);
+          //	IF ERROR Return and send 500 error with error
+          // console.log(files);
+          var file = files[0];
+          try{
+            var exceltojson = getExcelToJson(file);
+            processExcelData(filePath,exceltojson,processPreference);
+            return  res.json({result:"Data seeded"});
+          }
+         catch (ex) {
+           return  res.json({error_code:1,err_desc:ex.toString()});
+         }
         });
 	},
 
@@ -176,7 +226,7 @@ module.exports = {
               return res.json({error_code:1,err_desc:err, data: null});
             }
             result.forEach(function(userPreference){
-          Preference.findOne({category:userPreference.preference}).then(function (category){
+              Category.findOne({category:userPreference.preference}).then(function (category){
             if (!category) {
               sails.log('Could not find'+userPreference.preference+', sorry.');
             } else {
@@ -202,10 +252,16 @@ module.exports = {
         });
         return res.send("Database seeded:"+ i);
       });
-  } catch (e){
-    return  res.json({error_code:1,err_desc:"Corupted excel file"});
-  }
+   } catch (e){
+      return  res.json({error_code:1,err_desc:"Corupted excel file"});
+     }
       });
-    }
+    },
+
+  importLinksFromExcelToDb: function(req,res){
+    if (req.method === 'GET')
+      return res.json({ 'status': 'GET not allowed' });
+    processExcel(req, res,processLinks);
+  },
 };
 
