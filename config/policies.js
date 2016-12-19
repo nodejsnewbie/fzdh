@@ -34,10 +34,6 @@ module.exports.policies = {
     '*': ['passport', 'sessionAuth']
   },
 
-  'category': {
-    '*': ['passport', 'sessionAuth']
-  },
-
   'auth': {
     '*': ['passport']
   }
