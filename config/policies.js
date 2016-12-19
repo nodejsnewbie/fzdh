@@ -30,6 +30,13 @@ module.exports.policies = {
   'user': {
     '*': ['passport', 'bearerAuth']
   },
+  'link': {
+    '*': ['passport', 'sessionAuth']
+  },
+
+  'category': {
+    '*': ['passport', 'sessionAuth']
+  },
 
   'auth': {
     '*': ['passport']
