@@ -26,6 +26,9 @@ module.exports.policies = {
   'preference': {
     '*': ['passport', 'bearerAuth']
   },
+  'user': {
+    '*': ['passport', 'bearerAuth']
+  },
 
   'auth': {
     '*': ['passport']
