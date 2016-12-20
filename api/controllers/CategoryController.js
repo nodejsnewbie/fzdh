@@ -45,7 +45,8 @@ module.exports = {
         categories.forEach(function (category) {
           console.log("categories = ",categories);
           result.push({
-            title: category.category
+            title: category.category,
+            id:category.id
           });
 
         });
