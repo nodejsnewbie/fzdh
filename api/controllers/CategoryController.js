@@ -24,12 +24,37 @@ module.exports = {
     Category.findOne(id)
       .populate('links')
       .then(function (category) {
-        return  res.json(category.links);
+        if(category){
+          return  res.json(category.links);
+        } else {
+          return  res.json({ status : -1,
+            msg: 'no such category' });
+        }
+
       })
       .catch(function (err) {
         console.log(err);
         return  res.json({ status : -1,
           error: err });
+      });
+  },
+  categories:function (req, res){
+    Category.find({})
+      .then(function (categories) {
+        var result = [];
+        categories.forEach(function (category) {
+          result.push({
+            title: category.category
+          });
+          return  res.json(result);
+        });
+      })
+      .catch(function (err) {
+            console.log(err);
+            return res.json({
+              status: -1,
+              error: err
+            });
       });
   }
 };

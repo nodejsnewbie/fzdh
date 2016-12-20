@@ -25,7 +25,7 @@ module.exports.policies = {
     'home':['passport', 'sessionAuth']
   },
   'preference': {
-    '*': ['passport', 'bearerAuth']
+    '*': ['passport']
   },
   'user': {
     '*': ['passport', 'bearerAuth']
@@ -33,7 +33,9 @@ module.exports.policies = {
   'seed': {
     '*': ['passport', 'sessionAuth']
   },
-
+  'category': {
+    '*': ['passport']
+  },
   'auth': {
     '*': ['passport']
   }
