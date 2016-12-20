@@ -43,11 +43,13 @@ module.exports = {
       .then(function (categories) {
         var result = [];
         categories.forEach(function (category) {
+          console.log("categories = ",categories);
           result.push({
             title: category.category
           });
-          return  res.json(result);
+
         });
+       return res.json(result);
       })
       .catch(function (err) {
             console.log(err);
