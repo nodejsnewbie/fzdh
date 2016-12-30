@@ -20,10 +20,15 @@ module.exports = {
        type:'integer',
        defaultsTo: 3
     },
-    owner: {
-      model: 'Category'
+    // Add a reference to Pets
+   preferences: {
+     collection: 'preference',
+     via: 'link'
+   },
+    owners: {
+      collection: 'Category',
+     via: 'links'
     }
 
   }
 };
-

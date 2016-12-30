@@ -50,6 +50,9 @@ module.exports.routes = {
   '/importLinksFromExcelToDb': {
     view: 'importLinks'
   },
+  '/importCatalogFromexcel': {
+    view: 'importCatalog'
+  },
   'get /users': 'SystemController.users',
   'get /version': 'SystemController.version',
   'get /preference/:id': 'CategoryController.preference',

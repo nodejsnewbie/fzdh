@@ -134,7 +134,7 @@ var AuthController = {
         req.flash('error', flashError);
       }
       req.flash('form', req.body);
-
+      console.log(req.body);
       // If an error was thrown, redirect the user to the
       // login, register or disconnect action initiator view.
       // These views should take care of rendering the error messages.
@@ -154,14 +154,16 @@ var AuthController = {
 
     passport.callback(req, res, function (err, user) {
       if (err) {
+        console.log("hi");
+        console.log(err);
         return  res.json({succeed:false, erro: err});
       }
-
       req.login(user, function (err) {
-        // if (err) {
-        //   return tryAgain();
-        // }
-
+        if (err) {
+          console.log("err");
+          console.log(err);
+          return tryAgain();
+        }
         // Upon successful login, send the user to the homepage were req.user
         // will available.
         // res.redirect('/');

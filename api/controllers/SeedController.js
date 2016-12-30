@@ -47,19 +47,59 @@ function addLink(preference, category) {
   json['weight'] = preference.weight;
   addToCollection(category, json);
 }
-function processLinks(preference) {
-  Category.findOne({category:preference.category}).then(function (category){
+
+function addToCatalog(catalog, category) {
+  catalog.categories.add(category);
+  // Save the category, creating the new link and associations in the join table
+  catalog.save(function (err) {
+    if (err) {
+      sails.log(err);
+    }
+  });
+}
+
+function addCategory(entry, catalog) {
+  Category.findOne({category:entry.category}).then(function (category){
     if (!category) {
-      sails.log('Could not find '+preference.category+', create new one.');
-      Category.create({category:preference.category}).then(function (created) {
+      sails.log('Could not find '+entry.category+', create new one.');
+      Category.create({category:entry.category}).then(function (created) {
         // Queue up a new category to be added and a record to be created in the join table
-        addLink(preference, created);
+        addToCatalog(catalog, created);
       })
     } else {
       // Queue up a new category to be added and a record to be created in the join table
-      // var link =
       // sails.log(preference);
-      addLink(preference, category);
+      if(!category.categories.contains(category)) {
+        addToCatalog(catalog, category);
+      }
+    }
+  });
+}
+
+function processLink(link) {
+  Category.findOne({category:link.category}).then(function (category){
+    if (!category) {
+      sails.log('Could not find '+link.category+', create new one.');
+      Category.create({category:link.category}).then(function (created) {
+        // Queue up a new category to be added and a record to be created in the join table
+        addLink(link, created);
+      })
+    } else {
+      // Queue up a new category to be added and a record to be created in the join table
+      // sails.log(preference);
+      addLink(link, category);
+    }
+  });
+}
+function processCatalog(entry) {
+  Catalog.findOne({name:entry.name}).then(function (found){
+    if (!found) {
+      sails.log('Could not find '+entry.name+', create new one.');
+      Catalog.create({name:entry.name}).then(function (created) {
+        addCategory(entry, created);
+      })
+    } else {
+      addCategory(entry, found);
     }
   });
 }
@@ -203,24 +243,6 @@ module.exports = {
         if (req.method === 'GET')
             return res.json({ 'status': 'GET not allowed' });
         processExcel(req, res,processPreference);
-        // //	Call to /upload via GET is error
-        // var uploadFile = req.file('uploadFile');
-        // // console.log(uploadFile);
-        // uploadFile.upload({ dirname: '../../assets/uploadFiles' },function onUploadComplete(err, files) {
-        //     //	Files will be uploaded to .tmp/uploads
-        //   if (err) return res.serverError(err);
-        //   //	IF ERROR Return and send 500 error with error
-        //   // console.log(files);
-        //   var file = files[0];
-        //   try{
-        //     processExcelData(file,processPreference);
-        //     return  res.json({result:"Data seeded"});
-        //   }
-        //  catch (ex) {
-        //     sails.log(ex);
-        //    return  res.json({error_code:1,err_desc:ex.toString()});
-        //  }
-        // });
 	},
 
   importUserPreferenceseFromExcelToDb: function(req,res){
@@ -228,54 +250,16 @@ module.exports = {
         return res.json({ 'status': 'GET not allowed' });
       //	Call to /upload via GET is error
        processExcel(req, res,processUserPreference);
-   //    var uploadFile = req.file('uploadFile');
-   //    // console.log(uploadFile);
-   //
-   //    uploadFile.upload({ dirname: '../../assets/uploadFiles' },function onUploadComplete(err, files) {
-   //      //	Files will be uploaded to .tmp/uploads
-   //
-   //      if (err) return res.serverError(err);
-   //      //	IF ERROR Return and send 500 error with error
-   //
-   //      // console.log(files);
-   //      var file=files[0];
-   //      // console.log(file);
-   //      var fileName=file.filename;
-   //      var filePath=file.fd;
-   //      console.log(filePath);
-   //      if(fileName.split('.')[fileName.split('.').length-1] === 'xlsx'){
-   //        exceltojson = xlsxtojson;
-   //      } else if(fileName.split('.')[fileName.split('.').length-1] === 'xls')
-   //      {
-   //        exceltojson = xlstojson;
-   //
-   //      }else {
-   //        return res.end("not an valid file");
-   //      }
-   //      try {
-   //        exceltojson({
-   //          input: filePath,
-   //          output: null, //since we don't need output.json
-   //          lowerCaseHeaders:true
-   //        }, function(err, result){
-   //          if(err) {
-   //            return res.json({error_code:1,err_desc:err, data: null});
-   //          }
-   //          result.forEach(processUserPreference);
-   //      return res.send("Database seeded:");
-   //    });
-   // } catch (e){
-   //    return  res.json({error_code:1,err_desc:"Corupted excel file"});
-   //   }
-   //    });
     },
-
-
 
   importLinksFromExcelToDb: function(req,res){
     if (req.method === 'GET')
       return res.json({ 'status': 'GET not allowed' });
-    processExcel(req, res,processLinks);
+    processExcel(req, res,processLink);
   },
+  importCatalogFromexcel: function(req,res){
+    if (req.method === 'GET')
+      return res.json({ 'status': 'GET not allowed' });
+    processExcel(req, res,processCatalog);
+  }
 };
-
