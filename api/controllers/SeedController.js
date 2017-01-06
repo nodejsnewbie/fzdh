@@ -4,76 +4,69 @@
  * @description :: Server-side logic for managing Seeds
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
+var Promise = require('bluebird');
 var xlstojson = require("xls-to-json-lc");
 var xlsxtojson = require("xlsx-to-json-lc");
+
 function processPreference(preference) {
-  console.log(preference);
+  sails.log(preference);
   Category.findOne({category:preference.category}).then(function (category){
     if(category){
       Category.update(preference).exec(function afterwards(err, updated){
         if (err) {
          throw err;
         }
-        console.log('Updated Category to have name ' + updated[0].name);
+        sails.log('Updated Category to have name ' + updated[0].name);
       });
     } else {
       Category.create(preference).exec(function (err, created) {
         var i=0;
         if (err) {
-          console.log(preference);
-          console.log(err);
+          sails.log(preference);
+          sails.log(err);
         } else {
-          console.log(created);
+          sails.log(created);
         }
       });
     }
   });
 
 }
-function addToCollection(category, preference) {
-  category.links.add(preference);
+function addLink(link, category) {
+  var json = {};
+  json['title'] = link.titile;
+  json['url'] = link.url;
+  json['weight'] = link.weight;
+  category.links.add(json);
   // Save the category, creating the new link and associations in the join table
   category.save(function (err) {
-    if (err) {
-     sails.log(err);
-     sails.log.info('category already exists!')
-    }
-  });
-}
-function addLink(preference, category) {
-  var json = {};
-  json['title'] = preference.titile;
-  json['url'] = preference.url;
-  json['weight'] = preference.weight;
-  addToCollection(category, json);
-}
-
-function addToCatalog(catalog, category) {
-  catalog.categories.add(category);
-  // Save the category, creating the new link and associations in the join table
-  catalog.save(function (err) {
     if (err) {
       sails.log(err);
     }
   });
 }
 
-function addCategory(entry, catalog) {
-  Category.findOne({category:entry.category}).then(function (category){
-    if (!category) {
-      sails.log('Could not find '+entry.category+', create new one.');
-      Category.create({category:entry.category}).then(function (created) {
-        // Queue up a new category to be added and a record to be created in the join table
-        addToCatalog(catalog, created);
-      })
-    } else {
-      // Queue up a new category to be added and a record to be created in the join table
-      // sails.log(preference);
-      if(!category.categories.contains(category)) {
-        addToCatalog(catalog, category);
-      }
+function addToCatalog(catalog, category) {
+  catalog.categories.add(category);
+  catalog.save(function (err) {
+    if (err) {
+      sails.log(err);
+      throw err;
     }
   });
+}
+
+function addCategory(entry, catalog) {
+  Category.findOrCreate({category:entry.category}).exec(function createFindCB(err, category) {
+       if (err){
+         throw err;
+       }
+        if (catalog.categories.indexOf(category) ===-1){
+          sails.log(catalog.categories);
+          sails.log(category);
+          addToCatalog(catalog, category);
+          }
+  })
 }
 
 function processLink(link) {
@@ -89,21 +82,153 @@ function processLink(link) {
       // sails.log(preference);
       addLink(link, category);
     }
+  }) .catch(function (err) {
+    sails.log(err);
   });
 }
-function processCatalog(entry) {
-  Catalog.findOne({name:entry.name}).then(function (found){
-    if (!found) {
-      sails.log('Could not find '+entry.name+', create new one.');
-      Catalog.create({name:entry.name}).then(function (created) {
-        addCategory(entry, created);
-      })
-    } else {
-      addCategory(entry, found);
+function addPreferenceLink(preference, link) {
+  preference.links.add(link);
+  preference.save(function (err) {
+    if (err) {
+      sails.log(err);
     }
   });
 }
-function processExcelData(file,callback) {
+
+function addLinkToPreference(preference, entry) {
+  Link.findOne({url:entry.url}).then(function (found) {
+    if(found){
+      if(preference.links.indexof(found)===-1){
+        addPreferenceLink(preference,found);
+      }
+    } else {
+      Link.create({url: entry.url}).then(function (link) {
+        Category.findOne({category:entry.category}).then(function (category) {
+          if(category) {
+            if(category.links.indexof(category)===-1) {
+              addLink(link, category);
+            }
+          } else {
+            sails.log("no such category"+ entry.category);
+          }
+        }).then(addPreferenceLink(preference,link));
+      })
+    }
+  })
+}
+function isPreferencExist(user,entry,link){
+  user.preferences.forEach(function(preference) {
+      if (preference.category === entry.category && preference.name === entry.name && preference.links.indexOf(link) != -1) {
+        return true;
+      }
+    });
+  return false;
+}
+function buildPreference(catalog,user,entry) {
+    catalog.categories.forEach(function (category) {
+    if (category.category == entry.category) {
+      Link.findOrCreate({title: entry.title, url: entry.url})
+        .exec (function (err,findOrCreateLink) {
+           if(err){
+              throw err;
+           }
+          sails.log("findOrCreateLink:          ");
+          sails.log(findOrCreateLink);
+          sails.log("/findOrCreateLink");
+          Category.findOne({id:category.id})
+            .populate('links')
+            .exec( function (err,myCategory) {
+              if(err) {
+                throw err;
+              }
+              sails.log('category:');
+              sails.log(myCategory);
+              myCategory.links.add(findOrCreateLink);
+              myCategory.save(function (err) {
+                  if (err) {
+                    throw err;
+                  }
+                })
+              })
+          sails.log('user:');
+          sails.log(user);
+          sails.log('-----------------user-----------------------');
+          Preference.findOrCreate({owner:user.id,category:entry.category,name:entry.name,position:parseInt(entry.position, 10),link:findOrCreateLink.id})
+            .exec(function (err,preference) {
+              if(err){
+                throw err;
+              }
+             sails.log('newPreference:');
+             sails.log(preference);
+             // newPreference.links.add(findOrCreateLink);
+             //  newPreference.save(function(err) {
+             //    if (err) {
+             //       throw err;
+             //      }
+             //    })
+             //    user.preferences.add(newPreference);
+             //    user.save(function (err) {
+             //      if (err) {
+             //        throw err;
+             //      }
+             //    })
+             })
+            })
+      }})
+}
+
+function addPreference(entry, user) {
+  sails.log(entry);
+  Catalog.findOne({name:entry.name})
+    .populate('categories')
+    .exec(function (err, catalog){
+      if(err){
+        throw err;
+      }
+      if(catalog){
+      buildPreference(catalog,user, entry);
+      } else {
+        sails.log('no such catalog:'+catalog.name+'   skip');
+      }
+  })
+}
+function processPreferencese(entry,next) {
+  sails.log("processPreferencese");
+  User.findOrCreate({username:entry.user})
+    .populate('preferences')
+    .exec(function (err,user) {
+      if(err){
+        sails.log(err);
+        return next();
+      }
+      try {
+        sails.log("addPreference");
+        addPreference(entry,user);
+      } catch (err){
+        sails.log(err);
+        return next();
+      }
+      return next();
+  })
+}
+function processCatalog(entry, next){
+  Catalog.findOrCreate({name:entry.name})
+    .exec(function createFindCB(err, catalog) {
+      if(err){
+        sails.log(err);
+        return next();
+      }
+      try {
+        addCategory(entry, catalog);
+      } catch (err){
+        sails.log(err);
+        return next();
+      }
+      return next();
+    })
+}
+
+function processExcelData(file,iteratee) {
   sails.log("process file: "+file.filename);
   var exceltojson = getExcelToJson(file);
   // sails.log("exceltojson "+exceltojson.toString());
@@ -117,10 +242,17 @@ function processExcelData(file,callback) {
       }
       // res.json({error_code:0,err_desc:null, data: result});
       // var i = 0;
-    if((callback && typeof(callback) === "function")){
-      result.forEach(callback);
+    if((iteratee && typeof(iteratee) === "function")){
+      async.eachSeries(result, iteratee, function afterwards (err) {
+        if (err) {
+          sails.log('Import failed, error details:\n',err);
+          throw err;
+        }
+        sails.log('all done!  Import finished successfully.');
+      });
     } else {
-        throw new Error("invalid callback function");
+        sails.log(iteratee);
+        throw new Error("invalid iteratee function");
     };
 
    })
@@ -177,7 +309,7 @@ module.exports = {
   // bios: function(req, res) {
   //   Author.find({})
   //     .then(function (authors) {
-  //       console.log("authors = ",authors);
+  //       sails.log("authors = ",authors);
   //       var bs = [];
   //       authors.forEach(function (author) {
   //         bs.push({
@@ -188,7 +320,7 @@ module.exports = {
   //       res.json(bs);
   //     })
   //     .catch(function (err) {
-  //       console.log(err);
+  //       sails.log(err);
   //       res.status(500)
   //         .json({ error: err });
   //     });
@@ -232,7 +364,7 @@ module.exports = {
         res.json(bs);
       })
       .catch(function (err) {
-        console.log(err);
+        sails.log(err);
         res.status(500)
           .json({ error: err });
       });
@@ -261,5 +393,10 @@ module.exports = {
     if (req.method === 'GET')
       return res.json({ 'status': 'GET not allowed' });
     processExcel(req, res,processCatalog);
+  },
+  importPreferencese: function(req,res){
+    if (req.method === 'GET')
+      return res.json({ 'status': 'GET not allowed' });
+    processExcel(req, res,processPreferencese);
   }
 };

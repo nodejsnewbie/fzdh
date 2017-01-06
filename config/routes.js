@@ -53,11 +53,16 @@ module.exports.routes = {
   '/importCatalogFromexcel': {
     view: 'importCatalog'
   },
+  '/importPreferencese': {
+    view: 'importPreferencese'
+  },
   'get /users': 'SystemController.users',
   'get /version': 'SystemController.version',
   'get /preference/:id': 'CategoryController.preference',
   'get /category/:id/links': 'CategoryController.categoryList',
-  'get /category': 'CategoryController.categories'
+  'get /category': 'CategoryController.categories',
+  'get /catalog/:id ': 'CatalogController.catalogList',
+  'get /catalogs' : 'CatalogController.catalogs'
   // If a request to a URL doesn't match any of the custom routes above,
   // it is matched against Sails route blueprints.  See `config/blueprints.js`
   // for configuration options and examples.

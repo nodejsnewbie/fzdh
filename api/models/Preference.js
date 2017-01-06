@@ -11,19 +11,16 @@ module.exports = {
     name: {
       type: 'string',
       required: true,
-      unique:true,
       defaultsTo: ''
     },
     category: {
       type: 'string',
       required: true,
-      unique:true,
       defaultsTo: ''
     },
     position:{
       type: 'integer',
-      required: true,
-      unique: true
+      required: true
     },
     link:{
       model:'link'

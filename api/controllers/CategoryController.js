@@ -6,7 +6,7 @@
  */
 
 module.exports = {
-  preference: function (req, res){
+  preference: function (req, res){   //根据用户id获取其偏好
     var id=req.param("id");
     User.findOne(id)
       .populate('preferences')
@@ -19,7 +19,7 @@ module.exports = {
           error: err });
       });
   },
-  categoryList:function (req, res){
+  categoryList:function (req, res){  //根据分类id获取分类列表
     var id=req.param("id");
     Category.findOne(id)
       .populate('links')
@@ -38,7 +38,7 @@ module.exports = {
           error: err });
       });
   },
-  categories:function (req, res){
+  categories:function (req, res){   //获取所有分类
     Category.find({})
       .then(function (categories) {
         var result = [];

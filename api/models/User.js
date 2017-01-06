@@ -10,6 +10,11 @@ var User = {
       collection: 'preference',
       via: 'owner',
       dominant:true
+    },
+    devices: {
+      collection : 'device',
+      via: 'owner',
+      dominant:true
     }
   }
 };

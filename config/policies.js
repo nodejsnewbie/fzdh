@@ -36,6 +36,12 @@ module.exports.policies = {
   'category': {
     '*': ['passport']
   },
+  'catalog': {
+    '*': ['passport']
+  },
+  'device': {
+    '*': ['passport']
+  },
   'auth': {
     '*': ['passport']
   }
