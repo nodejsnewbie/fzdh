@@ -18,7 +18,11 @@ module.exports = {
       required: true,
       defaultsTo: ''
     },
-    position:{
+    xposition:{
+      type: 'integer',
+      required: true
+    },
+    yposition:{
       type: 'integer',
       required: true
     },

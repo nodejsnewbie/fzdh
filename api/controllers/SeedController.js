@@ -69,6 +69,18 @@ function addCategory(entry, catalog) {
   })
 }
 
+function addUser(entry, device) {
+  User.Create({username:entry.deviceId}).exec(function createFindCB(err, user) {
+       if (err){
+         throw err;
+       }
+        if (catalog.categories.indexOf(user) ===-1){
+          sails.log(user);
+          addToCatalog(catalog, user);
+          }
+  })
+}
+
 function processLink(link) {
   Category.findOne({category:link.category}).then(function (category){
     if (!category) {
@@ -153,7 +165,7 @@ function buildPreference(catalog,user,entry) {
           sails.log('user:');
           sails.log(user);
           sails.log('-----------------user-----------------------');
-          Preference.findOrCreate({owner:user.id,category:entry.category,name:entry.name,position:parseInt(entry.position, 10),link:findOrCreateLink.id})
+          Preference.findOrCreate({owner:user.id,category:entry.category,name:entry.name,xposition:parseInt(entry.xposition, 10),yposition:parseInt(entry.yposition, 10),link:findOrCreateLink.id})
             .exec(function (err,preference) {
               if(err){
                 throw err;
@@ -223,6 +235,35 @@ function processCatalog(entry, next){
       } catch (err){
         sails.log(err);
         return next();
+      }
+      return next();
+    })
+}
+function processDevice(entry, next){
+  Device.findOne({deviceId:entry.deviceId})
+    .exec(function (err, device) {
+      if(err){
+        sails.log(err);
+        return next();
+      }
+      if(device){
+        sails.log('device whith deviceId'+entry.diviceId+' already existed, skip')
+      } else {
+        User.create({username:entry.deviceId}).exec(function (err,user) {
+          if(err){
+            sails.log(err);
+            throw err;
+          }
+          Device.create({deviceId:entry.deviceId}).exec(function (err,device) {
+            user.devices.add(device);
+            user.save(function (err) {
+              if(err){
+                sails.log(err);
+                throw err;
+              }
+            })
+          });
+        })
       }
       return next();
     })
@@ -388,6 +429,11 @@ module.exports = {
     if (req.method === 'GET')
       return res.json({ 'status': 'GET not allowed' });
     processExcel(req, res,processLink);
+  },
+  importDeviceFromexcel: function(req,res){
+    if (req.method === 'GET')
+      return res.json({ 'status': 'GET not allowed' });
+    processExcel(req, res,processDevice);
   },
   importCatalogFromexcel: function(req,res){
     if (req.method === 'GET')

@@ -20,7 +20,6 @@ module.exports = {
        type:'integer',
        defaultsTo: 3
     },
-    // Add a reference to Pets
    preferences: {
      collection: 'preference',
      via: 'link'

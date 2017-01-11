@@ -58,9 +58,11 @@ module.exports.routes = {
   },
   'get /users': 'SystemController.users',
   'get /version': 'SystemController.version',
-  'get /preference/:id': 'CategoryController.preference',
-  'get /category/:id/links': 'CategoryController.categoryList',
   'get /category': 'CategoryController.categories',
+  'get /category/:id/links': 'CategoryController.categoryList',
+  'get /preference/device/:deviceId': 'PreferenceController.getDevicePreferences',
+  'get /preference/user/:userName': 'PreferenceController.getUserPreferences',
+  'get /preference/:id ': 'PreferenceController.preference',
   'get /catalog/:id ': 'CatalogController.catalogList',
   'get /catalogs' : 'CatalogController.catalogs'
   // If a request to a URL doesn't match any of the custom routes above,

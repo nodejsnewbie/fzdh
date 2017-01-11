@@ -42,6 +42,9 @@ module.exports.policies = {
   'device': {
     '*': ['passport']
   },
+  'link': {
+    '*': ['passport']
+  },
   'auth': {
     '*': ['passport']
   }
