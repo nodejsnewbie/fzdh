@@ -200,7 +200,7 @@ function addPreference(entry, user) {
       if(catalog){
       buildPreference(catalog,user, entry);
       } else {
-        sails.log('no such catalog:'+catalog.name+'   skip');
+        sails.log('no such catalog:'+entry.name+'   skip');
       }
   })
 }
