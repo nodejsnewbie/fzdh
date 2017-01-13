@@ -53,8 +53,8 @@ module.exports.routes = {
   '/importCatalogFromexcel': {
     view: 'importCatalog'
   },
-  '/importPreferencese': {
-    view: 'importPreferencese'
+  '/importPreferences': {
+    view: 'importPreferences'
   },
   'get /users': 'SystemController.users',
   'get /version': 'SystemController.version',

@@ -224,6 +224,8 @@ function processPreferencese(entry,next) {
   })
 }
 function processCatalog(entry, next){
+  sails.log('processing entry:');
+  sails.log(entry);
   Catalog.findOrCreate({name:entry.name})
     .exec(function createFindCB(err, catalog) {
       if(err){

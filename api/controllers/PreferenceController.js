@@ -117,6 +117,8 @@ module.exports = {
     var mapPreferences = function(user){
       if (user && user.preferences) {
         return [user, Promise.map(user.preferences, getLinks)];
+      } else {
+        return [user,Promise.map([], getLinks)]
       }
     };
 
@@ -144,7 +146,9 @@ module.exports = {
         }
         if(device){
           sails.log(device);
-          return getPreference(device);
+          var user=device.owner;
+          sails.log(user);
+          return getPreference(user.username);
         } else {
           User.create({username:deviceId})
           .exec(function (err,user) {
@@ -152,6 +156,7 @@ module.exports = {
               sails.log(err);
               throw err;
             }
+
             Device.create({deviceId:deviceId})
               .exec(function (err,device) {
               if(err) {
@@ -164,14 +169,15 @@ module.exports = {
                   sails.log(err);
                   throw err;
                 }
-                return getPreference(user.userName);
+
+                return getPreference('linyuan');
               })
           })
         })
       }
 
     })
-    var getLinks = function(preference) {
+    var getLink = function(preference) {
       return Preference.findOne(preference.id).populate('link')
         .then(function (preference) {
         var result = preference;
@@ -188,15 +194,18 @@ module.exports = {
     };
 
     var mapPreferences = function(user){
+      sails.log("mapPreferences");
       sails.log(user);
       if (user && user.preferences) {
-        return [user, Promise.map(user.preferences, getLinks)];
+        return [user, Promise.map(user.preferences, getLink)];
+      } else {
+        return [user, Promise.map([], getLink)];
       }
     };
 
-    function getPreference(device) {
-      if(device.owner && device.owner.userName) {
-      return User.findOne({username: userName}).populate('preferences')
+    function getPreference(username) {
+      return User.findOne({username:username})
+        .populate('preferences')
         .then(mapPreferences)
         .spread(function (user, preferences) {
           var result = user;
@@ -207,12 +216,7 @@ module.exports = {
           delete result.updatedAt;
           return res.json(result);
         });
-      } else {
-        return res.json({error:'owner not exist'})
-      }
     }
-
-
   }
 
 };
