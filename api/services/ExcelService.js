@@ -7,6 +7,7 @@ var path = require('path');
 
 function processPreferences(entry, next) {
   sails.log("processPreferences");
+  sails.log(entry);
   User.findOrCreate({username:entry.user})
     .populate('preferences')
     .exec(function (err,user) {
@@ -24,6 +25,14 @@ function processPreferences(entry, next) {
       }
       return next();
     })
+}
+
+
+function processorFactory(user){
+  return function (entry, next) {
+    entry.user=user.username;
+    processPreferences(entry,next);
+  }
 }
 
 function addPreference(entry, user) {
@@ -97,13 +106,18 @@ function processCatalog(entry, next){
     })
 }
 function addCategory(entry, catalog) {
-  Category.findOrCreate({category:entry.category}).exec(function createFindCB(err, category) {
+  Category.findOrCreate({category:entry.category})
+    .exec(function createFindCB(err, category) {
     if (err){
       throw err;
     }
     if (catalog.categories.indexOf(category) ===-1){
+      sails.log('!!!!!**********************************************!!!!!')
       sails.log(catalog.categories);
+      sails.log('**********************************************')
+      sails.log('category:');
       sails.log(category);
+      sails.log('----**********************************************------')
       addToCatalog(catalog, category);
     }
   })
@@ -143,6 +157,34 @@ function processExcelData(fileName,iteratee) {
           sails.log('Import failed, error details:\n',err);
           throw err;
         }
+      });
+      sails.log('all done!  Import finished successfully.');
+    } else {
+      sails.log(iteratee);
+      throw new Error("invalid iteratee function");
+    }
+
+  })
+}
+
+
+function processExcelForUser(fileName,user,iteratee) {
+  sails.log("process fileName: "+fileName);
+  var exceltojson = getExcelToJson(fileName);
+  exceltojson({
+    input: fileName,
+    output: null, //since we don't need output.json
+    lowerCaseHeaders: true
+  }, function (err, result) {
+    if (err) {
+      throw err;
+    }
+    if((iteratee && typeof(iteratee) === "function")){
+      async.eachSeries(result, iteratee(user), function afterwards (err) {
+        if (err) {
+          sails.log('Import failed, error details:\n',err);
+          throw err;
+        }
         sails.log('all done!  Import finished successfully.');
       });
     } else {
@@ -155,7 +197,7 @@ function processExcelData(fileName,iteratee) {
 
 module.exports = {
   initCatalog: function () {
-    var fileName=path.dirname(__filename) + '\\..\\..\\assets\\uploadFiles\\' +'catalog.xlsx';
+    var fileName=path.dirname(__filename) + '\\..\\..\\assets\\initConfigFile\\' +'catalog.xlsx';
     ExcelService.processExcel(fileName,processCatalog);
   },
 
@@ -169,10 +211,12 @@ module.exports = {
     }
   },
   initDefaultPreference:function(userName){
-  User.create({username:userName})
+  User.findOrCreate({username:userName})
     .then(function (user) {
-      var fileName=path.dirname(__filename) + '\\..\\..\\assets\\uploadFiles\\' +'preferences.xlsx';
-      ExcelService.processExcel(fileName,processCatalog);
+      var fileName=path.dirname(__filename) + '\\..\\..\\assets\\initConfigFile\\' +'preference.xlsx';
+      sails.log(user);
+      var processor=processorFactory(user);
+      ExcelService.processExcel(fileName,processor);
   })
   }
 }

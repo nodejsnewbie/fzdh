@@ -23,8 +23,8 @@ module.exports.bootstrap = function(cb) {
   //       return cb();
   //     } })
 
-  // ExcelService.initCatalog();
-  // ExcelService.initUserPreference('admin');
+  ExcelService.initCatalog();
+  ExcelService.initDefaultPreference('admin');
   sails.services.passport.loadStrategies();
   cb();
 };

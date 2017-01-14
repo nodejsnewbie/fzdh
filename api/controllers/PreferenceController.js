@@ -169,8 +169,8 @@ module.exports = {
                   sails.log(err);
                   throw err;
                 }
-
-                return getPreference('linyuan');
+                ExcelService.initDefaultPreference(deviceId);
+                return getPreference('admin');
               })
           })
         })
