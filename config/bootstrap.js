@@ -22,6 +22,9 @@ module.exports.bootstrap = function(cb) {
   //       console.log('Number of video records: ', numVideos);
   //       return cb();
   //     } })
+
+  // ExcelService.initCatalog();
+  // ExcelService.initUserPreference('admin');
   sails.services.passport.loadStrategies();
   cb();
 };

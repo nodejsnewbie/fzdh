@@ -81,22 +81,23 @@ function addUser(entry, device) {
   })
 }
 
-function processLink(link) {
-  Category.findOne({category:link.category}).then(function (category){
+function processLink(link,next) {
+  Category.findOne({category:link.category})
+    .then(function (category){
     if (!category) {
-      sails.log('Could not find '+link.category+', create new one.');
-      Category.create({category:link.category}).then(function (created) {
-        // Queue up a new category to be added and a record to be created in the join table
-        addLink(link, created);
-      })
+      sails.log('Could not find '+link.category+', skip');
+      // Category.create({category:link.category})
+      //   .then(function (created) {
+      //   // Queue up a new category to be added and a record to be created in the join table
+      //   addLink(link, created);
+      // })
     } else {
-      // Queue up a new category to be added and a record to be created in the join table
-      // sails.log(preference);
       addLink(link, category);
     }
   }) .catch(function (err) {
     sails.log(err);
-  });
+  })
+  return next();
 }
 function addPreferenceLink(preference, link) {
   preference.links.add(link);
@@ -210,43 +211,23 @@ function processPreferencese(entry,next) {
     .populate('preferences')
     .exec(function (err,user) {
       if(err){
-        sails.log(err);
-        return next();
+        sails.log(err)
       }
       try {
         sails.log("addPreference");
         addPreference(entry,user);
       } catch (err){
-        sails.log(err);
-        return next();
+        sails.log(err)
       }
       return next();
   })
 }
-function processCatalog(entry, next){
-  sails.log('processing entry:');
-  sails.log(entry);
-  Catalog.findOrCreate({name:entry.name})
-    .exec(function createFindCB(err, catalog) {
-      if(err){
-        sails.log(err);
-        return next();
-      }
-      try {
-        addCategory(entry, catalog);
-      } catch (err){
-        sails.log(err);
-        return next();
-      }
-      return next();
-    })
-}
+
 function processDevice(entry, next){
   Device.findOne({deviceId:entry.deviceId})
     .exec(function (err, device) {
       if(err){
-        sails.log(err);
-        return next();
+        sails.log(err)
       }
       if(device){
         sails.log('device whith deviceId'+entry.diviceId+' already existed, skip')
@@ -271,9 +252,19 @@ function processDevice(entry, next){
     })
 }
 
+function getExcelToJson(fileName) {
+  if (fileName.split('.')[fileName.split('.').length - 1] === 'xlsx') {
+    return xlsxtojson;
+  } else if (fileName.split('.')[fileName.split('.').length - 1] === 'xls') {
+    return xlstojson;
+  } else {
+    throw new Error("invalid fileName extension");
+  }
+}
+
 function processExcelData(file,iteratee) {
   sails.log("process file: "+file.filename);
-  var exceltojson = getExcelToJson(file);
+  var exceltojson = getExcelToJson(file.filename);
   // sails.log("exceltojson "+exceltojson.toString());
   exceltojson({
       input: file.fd,
@@ -300,19 +291,7 @@ function processExcelData(file,iteratee) {
 
    })
 }
-function getExcelToJson(file) {
-  var fileName = file.filename;
-  var filePath = file.fd;
-  var exceltojson=null;
-  if (fileName.split('.')[fileName.split('.').length - 1] === 'xlsx') {
-    exceltojson = xlsxtojson;
-  } else if (fileName.split('.')[fileName.split('.').length - 1] === 'xls') {
-    exceltojson = xlstojson;
-  } else {
-    throw new Error("invalid file extension");
-  }
-  return exceltojson;
-}
+
 function processExcel(req, res,callback) {
   var uploadFile = req.file('uploadFile');
   uploadFile.upload({dirname: '../../assets/uploadFiles'}, function onUploadComplete(err, files) {
@@ -392,6 +371,23 @@ module.exports = {
 	// 	});
 	// },
 
+  processCatalog : function(entry, next){
+  sails.log('processing entry:');
+  sails.log(entry);
+  Catalog.findOrCreate({name:entry.name})
+    .exec(function createFindCB(err, catalog) {
+      if(err){
+        sails.log(err)
+      }
+      try {
+        addCategory(entry, catalog);
+      } catch (err){
+        sails.log(err)
+      }
+      return next();
+    })
+},
+
   preferences: function(req, res) {
     User.find({})
       .populate('preferences')
@@ -440,7 +436,7 @@ module.exports = {
   importCatalogFromexcel: function(req,res){
     if (req.method === 'GET')
       return res.json({ 'status': 'GET not allowed' });
-    processExcel(req, res,processCatalog);
+    processExcel(req, res,sails.controllers.seed.processCatalog);
   },
   importPreferencese: function(req,res){
     if (req.method === 'GET')
