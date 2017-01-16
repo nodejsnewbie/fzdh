@@ -294,8 +294,16 @@ function processExcelData(file,iteratee) {
 
 function processExcel(req, res,callback) {
   var uploadFile = req.file('uploadFile');
-  uploadFile.upload({dirname: '../../assets/uploadFiles'}, function onUploadComplete(err, files) {
+  var filename = uploadFile._files[0].stream.filename;
+  uploadFile.upload({
+    dirname: require('path').resolve(sails.config.appPath, 'assets/uploadFiles'),
+    saveAs: filename, /* optional. default file name */
+    maxBytes: 5 * 1024 * 1024 //5 MB
+  }, function onUploadComplete(err, files) {
     var file = files[0];
+    // fs.rename(file.filename, "your_folder/" +files[0].filename, function(err){
+    //   sails.log(err);
+    // });
     try {
       processExcelData(file,callback);
       return res.json({result: "Data seeded"});

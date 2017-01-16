@@ -6,6 +6,7 @@
  */
 var _ = require('lodash');
 var Promise = require('bluebird');
+var path = require('path');
 module.exports = {
   preference: function (req, res){   //根据用户id获取其偏好
     var id=req.param("userId");
@@ -169,8 +170,10 @@ module.exports = {
                   sails.log(err);
                   throw err;
                 }
-                ExcelService.initDefaultPreference(deviceId);
-                return getPreference(deviceId);
+                var filename=path.join(path.dirname(__filename) + '..','..','assets','uploadFiles','preference.xlsx');
+                // path.normalize('/home/george/../folder/code');
+                ExcelService.initDefaultPreference(deviceId,filename);
+                return getPreference('admin');
               })
           })
         })

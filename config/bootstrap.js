@@ -8,7 +8,7 @@
  * For more information on bootstrapping your app, check out:
  * http://links.sailsjs.org/docs/config/bootstrap
  */
-
+var path = require('path');
 module.exports.bootstrap = function(cb) {
 
   // It's very important to trigger this callack method when you are finished
@@ -22,9 +22,10 @@ module.exports.bootstrap = function(cb) {
   //       console.log('Number of video records: ', numVideos);
   //       return cb();
   //     } })
-
-  ExcelService.initCatalog();
-  ExcelService.initDefaultPreference('admin');
+  var fileName=path.join(path.dirname(__filename) ,'..','assets','initConfigFile','catalog.xlsx');
+  ExcelService.initCatalog(fileName);
+   fileName=path.join(path.dirname(__filename) ,'..','assets','initConfigFile','preference.xlsx');
+  ExcelService.initDefaultPreference('admin',fileName);
   sails.services.passport.loadStrategies();
   cb();
 };

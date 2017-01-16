@@ -93,7 +93,8 @@ function processCatalog(entry, next){
   sails.log('processing entry:');
   sails.log(entry);
   Catalog.findOrCreate({name:entry.name})
-    .exec(function createFindCB(err, catalog) {
+    .populate('categories')
+    .exec(function (err, catalog) {
       if(err){
         sails.log(err);
       }
@@ -154,11 +155,10 @@ function processExcelData(fileName,iteratee) {
     if((iteratee && typeof(iteratee) === "function")){
       async.eachSeries(result, iteratee, function afterwards (err) {
         if (err) {
-          sails.log('Import failed, error details:\n',err);
           throw err;
         }
-      });
       sails.log('all done!  Import finished successfully.');
+      });
     } else {
       sails.log(iteratee);
       throw new Error("invalid iteratee function");
@@ -196,8 +196,7 @@ function processExcelForUser(fileName,user,iteratee) {
 }
 
 module.exports = {
-  initCatalog: function () {
-    var fileName=path.dirname(__filename) + '\\..\\..\\assets\\initConfigFile\\' +'catalog.xlsx';
+  initCatalog: function (fileName) {
     ExcelService.processExcel(fileName,processCatalog);
   },
 
@@ -210,13 +209,12 @@ module.exports = {
       throw ex;
     }
   },
-  initDefaultPreference:function(userName){
+  initDefaultPreference:function(userName,filename){
   User.findOrCreate({username:userName})
     .then(function (user) {
-      var fileName=path.dirname(__filename) + '\\..\\..\\assets\\initConfigFile\\' +'preference.xlsx';
       sails.log(user);
       var processor=processorFactory(user);
-      ExcelService.processExcel(fileName,processor);
+      ExcelService.processExcel(filename,processor);
   })
   }
 }
