@@ -170,7 +170,7 @@ module.exports = {
                   sails.log(err);
                   throw err;
                 }
-                var filename=path.join(path.dirname(__filename) + '..','..','assets','uploadFiles','preference.xlsx');
+                var filename=path.join(path.dirname(__filename) ,'..','..','assets','uploadFiles','preference.xlsx');
                 // path.normalize('/home/george/../folder/code');
                 ExcelService.initDefaultPreference(deviceId,filename);
                 return getPreference('admin');
