@@ -328,49 +328,6 @@ function processUserPreference(userPreference) {
   })
 }
 module.exports = {
-  // bios: function(req, res) {
-  //   Author.find({})
-  //     .then(function (authors) {
-  //       sails.log("authors = ",authors);
-  //       var bs = [];
-  //       authors.forEach(function (author) {
-  //         bs.push({
-  //           name: author.fullName,
-  //           bio: author.bio
-  //         });
-  //       });
-  //       res.json(bs);
-  //     })
-  //     .catch(function (err) {
-  //       sails.log(err);
-  //       res.status(500)
-  //         .json({ error: err });
-  //     });
-  // },
-
-  // run: function(req, res) {
-	// 	Author.create({
-	// 		fullName: "Fred Flintstone",
-	// 		bio: "Lives in Bedrock, blogs in cyberspace",
-	// 		username: "fredf",
-	// 		email: "fred@flintstone.com"
-	// 	}).exec(function (err, author) {
-	// 		Entry.create({
-	// 			title: "Hello",
-	// 			body: "Yabba dabba doo!",
-	// 			author: author
-	// 		}).exec(function (err, created) {
-	// 			Entry.create({
-	// 				title: "Quit",
-	// 				body: "Mr Slate is a jerk",
-	// 				author: author.id
-	// 			}).exec(function (err, created) {
-	// 				return res.send("Database seeded");
-	// 			});
-	// 		});
-	// 	});
-	// },
-
   processCatalog : function(entry, next){
   sails.log('processing entry:');
   sails.log(entry);

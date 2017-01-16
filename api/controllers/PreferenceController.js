@@ -170,7 +170,7 @@ module.exports = {
                   throw err;
                 }
                 ExcelService.initDefaultPreference(deviceId);
-                return getPreference('admin');
+                return getPreference(deviceId);
               })
           })
         })
