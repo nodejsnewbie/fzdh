@@ -8,6 +8,69 @@ var Promise = require('bluebird');
 var xlstojson = require("xls-to-json-lc");
 var xlsxtojson = require("xlsx-to-json-lc");
 
+function processLink(link,next) {
+  sails.log('entry:');
+  sails.log(link);
+  Category.findOne({category:link.category})
+    .populate('links')
+    .then(function (category){
+    if (!category) {
+      sails.log('Could not find '+link.category+', skip');
+    } else {
+      addLink(link, category);
+    }
+  }) .catch(function (err) {
+    sails.log(err);
+  })
+  return next();
+}
+
+function addLink(link, category) {
+  Link.findOrCreate({url:link.url,title:link.title,weight:link.weight})
+    .populate('owners')
+    .exec(function (err,link) {
+      if(err){
+        sails.log(err);
+      }
+      else {
+        link.owners.add(category.id);
+        link.save(function (err) {
+           if (err) {
+             sails.log(err);
+           }
+         });
+      }
+    })
+  // var json = {};
+  // json['title'] = link.titile;
+  // json['url'] = link.url;
+  // json['weight'] = link.weight;
+  // if(link.imagePath) {
+  //   sails.log('importImage...');
+  // json['image']=importImage(link.imagePath);
+}
+function importImage(imagePath) {
+  sails.log(imagePath);
+  var fs = require('fs');
+  var path = require('path');
+  var dst = path.resolve(sails.config.appPath, 'assets/images',path.basename(imagePath));
+  sails.log(dst);
+  fs.writeFileSync(dst, fs.readFileSync(imagePath));
+  return dst;
+}
+function isLinkExist(link,category){
+  link.owners.forEach(function(owner) {
+    sails.log("compare:")
+    sails.log(owner.category);
+    sails.log(category.category);
+    if (owner.category == category.category) {
+      sails.log(owner.category == category.category);
+      return true;
+    }
+  });
+  sails.log("hi");
+  return false;
+}
 function processPreference(preference) {
   sails.log(preference);
   Category.findOne({category:preference.category}).then(function (category){
@@ -32,29 +95,7 @@ function processPreference(preference) {
   });
 
 }
-function addLink(link, category) {
-  var json = {};
-  json['title'] = link.titile;
-  json['url'] = link.url;
-  json['weight'] = link.weight;
-  category.links.add(json);
-  // Save the category, creating the new link and associations in the join table
-  category.save(function (err) {
-    if (err) {
-      sails.log(err);
-    }
-  });
-}
 
-function addToCatalog(catalog, category) {
-  catalog.categories.add(category);
-  catalog.save(function (err) {
-    if (err) {
-      sails.log(err);
-      throw err;
-    }
-  });
-}
 
 function addCategory(entry, catalog) {
   Category.findOrCreate({category:entry.category}).exec(function createFindCB(err, category) {
@@ -67,37 +108,6 @@ function addCategory(entry, catalog) {
           addToCatalog(catalog, category);
           }
   })
-}
-
-function addUser(entry, device) {
-  User.Create({username:entry.deviceId}).exec(function createFindCB(err, user) {
-       if (err){
-         throw err;
-       }
-        if (catalog.categories.indexOf(user) ===-1){
-          sails.log(user);
-          addToCatalog(catalog, user);
-          }
-  })
-}
-
-function processLink(link,next) {
-  Category.findOne({category:link.category})
-    .then(function (category){
-    if (!category) {
-      sails.log('Could not find '+link.category+', skip');
-      // Category.create({category:link.category})
-      //   .then(function (created) {
-      //   // Queue up a new category to be added and a record to be created in the join table
-      //   addLink(link, created);
-      // })
-    } else {
-      addLink(link, category);
-    }
-  }) .catch(function (err) {
-    sails.log(err);
-  })
-  return next();
 }
 function addPreferenceLink(preference, link) {
   preference.links.add(link);
@@ -129,6 +139,8 @@ function addLinkToPreference(preference, entry) {
     }
   })
 }
+
+
 function isPreferencExist(user,entry,link){
   user.preferences.forEach(function(preference) {
       if (preference.category === entry.category && preference.name === entry.name && preference.links.indexOf(link) != -1) {
@@ -172,19 +184,7 @@ function buildPreference(catalog,user,entry) {
                 throw err;
               }
              sails.log('newPreference:');
-             sails.log(preference);
-             // newPreference.links.add(findOrCreateLink);
-             //  newPreference.save(function(err) {
-             //    if (err) {
-             //       throw err;
-             //      }
-             //    })
-             //    user.preferences.add(newPreference);
-             //    user.save(function (err) {
-             //      if (err) {
-             //        throw err;
-             //      }
-             //    })
+             sails.log(preference)
              })
             })
       }})
@@ -205,8 +205,8 @@ function addPreference(entry, user) {
       }
   })
 }
-function processPreferencese(entry,next) {
-  sails.log("processPreferencese");
+function processPreferences(entry, next) {
+  sails.log("processPreferences");
   User.findOrCreate({username:entry.user})
     .populate('preferences')
     .exec(function (err,user) {
@@ -221,6 +221,28 @@ function processPreferencese(entry,next) {
       }
       return next();
   })
+}
+
+
+function addUser(entry, device) {
+  User.Create({username:entry.deviceId}).exec(function createFindCB(err, user) {
+       if (err){
+         throw err;
+       }
+        if (catalog.categories.indexOf(user) ===-1){
+          sails.log(user);
+          addToCatalog(catalog, user);
+          }
+  })
+}
+function addToCatalog(catalog, category) {
+  catalog.categories.add(category);
+  catalog.save(function (err) {
+    if (err) {
+      sails.log(err);
+      throw err;
+    }
+  });
 }
 
 function processDevice(entry, next){
@@ -406,6 +428,15 @@ module.exports = {
   importPreferencese: function(req,res){
     if (req.method === 'GET')
       return res.json({ 'status': 'GET not allowed' });
-    processExcel(req, res,processPreferencese);
+    processExcel(req, res,processPreferences);
+  },
+  clearCatalog: function (req,res) {
+    Catalog.destroy({}).exec(function (err){
+      if (err) {
+        return res.negotiate(err);
+      }
+      sails.log('Catalog is empty.');
+      return res.ok();
+    });
   }
 };

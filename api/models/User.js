@@ -7,12 +7,12 @@ var User = {
     email     : { type: 'email',  unique: true },
     passports : { collection: 'Passport', via: 'user' },
     preferences: {
-      collection: 'preference',
+      collection: 'Preference',
       via: 'owner',
       dominant:true
     },
     devices: {
-      collection : 'device',
+      collection : 'Device',
       via: 'owner',
       dominant:true
     }

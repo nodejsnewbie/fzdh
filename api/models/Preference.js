@@ -27,11 +27,11 @@ module.exports = {
       required: true
     },
     link:{
-      model:'link'
+      model:'Link'
     },
     // Add a reference to User
     owner: {
-      model: 'user'
+      model: 'User'
     }
   }
 };

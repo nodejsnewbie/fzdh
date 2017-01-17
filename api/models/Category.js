@@ -15,11 +15,11 @@ module.exports = {
       defaultsTo: ''
     },
     types:{
-      collection:'catalog',
+      collection:'Catalog',
       via:'categories'
     },
     links:{
-      collection:'link',
+      collection:'Link',
       via:'owners'
     },
     fans:{

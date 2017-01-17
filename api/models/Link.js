@@ -20,13 +20,17 @@ module.exports = {
        type:'integer',
        defaultsTo: 3
     },
+    image:{
+      type:'string',
+      required: false
+    },
    preferences: {
-     collection: 'preference',
+     collection: 'Preference',
      via: 'link'
    },
     owners: {
-      collection: 'Category',
-     via: 'links'
+       collection: 'Category',
+       via: 'links'
     }
 
   }

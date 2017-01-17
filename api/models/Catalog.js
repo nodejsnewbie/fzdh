@@ -15,7 +15,7 @@ module.exports = {
       defaultsTo: ''
     },
     categories:{
-      collection:'category',
+      collection:'Category',
       via:'types'
     }
   }

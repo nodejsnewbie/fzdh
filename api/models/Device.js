@@ -10,7 +10,7 @@ module.exports = {
   attributes: {
     deviceId  : { type: 'string', unique: true },
     owner : {
-      model : 'user'
+      model : 'User'
     }
   }
 };

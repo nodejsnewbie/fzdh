@@ -64,7 +64,8 @@ module.exports.routes = {
   'get /preference/user/:userName': 'PreferenceController.getUserPreferences',
   'get /preference/:id ': 'PreferenceController.preference',
   'get /catalog/:id ': 'CatalogController.catalogList',
-  'get /catalogs' : 'CatalogController.catalogs'
+  'get /catalogs' : 'CatalogController.catalogs',
+  'delete /clearCatalog': 'SeedController.clearCatalog'
   // If a request to a URL doesn't match any of the custom routes above,
   // it is matched against Sails route blueprints.  See `config/blueprints.js`
   // for configuration options and examples.
