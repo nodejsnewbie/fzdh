@@ -59,9 +59,17 @@ function buildPreference(catalog,user,entry) {
           if(err){
             throw err;
           }
-          // sails.log("findOrCreateLink:          ");
-          // sails.log(findOrCreateLink);
-          // sails.log("/findOrCreateLink");
+          if(entry.imagepath) {
+            var image=importImage(entry.imagepath);
+            Link.update(link.id,{image:image})
+              .exec(function afterwards(err, updated){
+                if (err) {
+                  // handle error here- e.g. `res.serverError(err);`
+                  throw err;
+                }
+                console.log('Updated Link to have image ' + updated[0].image);
+              });
+          }
           Category.findOne({id:category.id})
             .populate('links')
             .exec( function (err,myCategory) {
@@ -86,7 +94,22 @@ function buildPreference(catalog,user,entry) {
               sails.log(preference);
             })
         })
-    }})
+    }
+  })
+}
+
+function importImage(imagePath) {
+  try {
+    sails.log(imagePath);
+    var fs = require('fs');
+    var path = require('path');
+    var dst = path.resolve(sails.config.appPath, 'assets/images',path.basename(imagePath));
+    fs.writeFileSync(dst, fs.readFileSync(imagePath));
+  } catch (err) {
+    sails.log(err);
+    throw err;
+  }
+  return  require('util').format('%s/%s','images', path.basename(imagePath))
 }
 
 function processCatalog(entry, next){

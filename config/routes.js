@@ -62,6 +62,7 @@ module.exports.routes = {
   'get /category/:id/links': 'CategoryController.categoryList',
   'get /preference/device/:deviceId': 'PreferenceController.getDevicePreferences',
   'get /preference/user/:userName': 'PreferenceController.getUserPreferences',
+  'get /preference/user/:userName/:category': 'PreferenceController.getUserPreferencesByCategory',
   'get /preference/:id ': 'PreferenceController.preference',
   'get /catalog/:id ': 'CatalogController.catalogList',
   'get /catalogs' : 'CatalogController.catalogs',

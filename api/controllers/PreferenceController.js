@@ -7,6 +7,39 @@
 var _ = require('lodash');
 var Promise = require('bluebird');
 var path = require('path');
+function getLinks(preference) {
+  return Preference.findOne(preference.id)
+    .populate('link')
+    .populate('owner')
+    .then(function (preference) {
+      var result = preference;
+      delete result.link.createdAt;
+      delete result.link.updatedAt;
+      delete result.link.preferences;
+      delete result.link.owners;
+      delete result.link.weight;
+      delete result.createdAt;
+      delete result.updatedAt;
+      delete result.owner.passports;
+      delete result.owner.preferences;
+      delete result.owner.devices;
+      delete result.owner.username;
+      delete result.owner.createdAt;
+      delete result.owner.updatedAt;
+      return result;
+    })
+}
+function mapPreferences(user){
+  if (user) {
+    if (user.preferences) {
+      return [user, Promise.map(user.preferences, getLinks)];
+    } else {
+      return [user, Promise.map([], getLinks)];
+    }
+  } else {
+    return [null,null];
+  }
+}
 module.exports = {
   preference: function (req, res){   //根据用户id获取其偏好
     var id=req.param("userId");
@@ -99,41 +132,27 @@ module.exports = {
   getUserPreferences: function(req,res) {
     sails.log('getUserPreferences');
     var userName=req.param("userName");
-    var getLinks = function(preference) {
-      return Preference.findOne(preference.id).populate('link')
-        .then(function (preference) {
-        var result = preference;
-        delete result.link.createdAt;
-        delete result.link.updatedAt;
-        delete result.link.preferences;
-        delete result.link.owners;
-        delete result.link.weight;
-        delete result.createdAt;
-        delete result.updatedAt;
-        delete result.owner;
-        return result;
-      });
-    };
-
-    var mapPreferences = function(user){
-      if (user && user.preferences) {
-        return [user, Promise.map(user.preferences, getLinks)];
-      } else {
-        return [user,Promise.map([], getLinks)]
-      }
-    };
-
-    return User.findOne({username:userName}).populate('preferences')
+    User.findOne({username:userName})
+      .populate('preferences')
       .then(mapPreferences)
       .spread(function(user, preferences){
+        if(user) {
         var result=user;
         result.preferences = preferences;
+        result.success=true;
         delete result.username;
         delete result.email;
         delete result.createdAt;
         delete result.updatedAt;
         return  res.json(result);
-      });
+        } else {
+          return   res.json({ success: false, message: 'user not found' });
+        }
+      })
+      .fail(function(err) {
+        sails.log(err);
+        res.json({ success: false, message: err });
+      })
   },
   getDevicePreferences: function(req,res){
     sails.log('getDevicePreferences');
@@ -180,44 +199,84 @@ module.exports = {
       }
 
     })
-    var getLink = function(preference) {
-      return Preference.findOne(preference.id).populate('link')
-        .then(function (preference) {
-        var result = preference;
-        delete result.link.createdAt;
-        delete result.link.updatedAt;
-        delete result.link.preferences;
-        delete result.link.owners;
-        delete result.link.weight;
-        delete result.createdAt;
-        delete result.updatedAt;
-        delete result.owner;
-        return result;
-      });
-    };
+    // var getLink = function(preference) {
+    //   return Preference.findOne(preference.id).populate('link')
+    //     .then(function (preference) {
+    //     var result = preference;
+    //     delete result.link.createdAt;
+    //     delete result.link.updatedAt;
+    //     delete result.link.preferences;
+    //     delete result.link.owners;
+    //     delete result.link.weight;
+    //     delete result.createdAt;
+    //     delete result.updatedAt;
+    //     delete result.owner;
+    //     return result;
+    //   });
+    // };
 
-    var mapPreferences = function(user){
-      sails.log("mapPreferences");
-      sails.log(user);
-      if (user && user.preferences) {
-        return [user, Promise.map(user.preferences, getLink)];
-      } else {
-        return [user, Promise.map([], getLink)];
-      }
-    };
-
-    function getPreference(username) {
+     function getPreference(username) {
       return User.findOne({username:username})
         .populate('preferences')
         .then(mapPreferences)
         .spread(function (user, preferences) {
+          if(user){
           var result = user;
+          result.success=true;
           result.preferences = preferences;
           delete result.username;
           delete result.email;
           delete result.createdAt;
           delete result.updatedAt;
           return res.json(result);
+          }
+          else {
+            return   res.json({ success: false, message: 'user not found' });
+          }
+        })
+        .fail(function(err) {
+          sails.log(err);
+          res.json({ success: false, message: err });
+        })
+    }
+    function getUserPreferencesByCategory() {
+      sails.log('getUserPreferencesByCategory');
+      var userName=req.param("userName");
+      var category=req.param("category");
+      var getLinks = function(preference) {
+        return Preference.findOne(preference.id)
+          .populate('link')
+          .then(function (preference) {
+            var result = preference;
+            delete result.link.createdAt;
+            delete result.link.updatedAt;
+            delete result.link.preferences;
+            delete result.link.owners;
+            delete result.link.weight;
+            delete result.createdAt;
+            delete result.updatedAt;
+            delete result.owner;
+            return result;
+          });
+      };
+      var mapPreferences = function(user){
+        if (user && user.preferences) {
+          return [user, Promise.map(user.preferences, getLinks)];
+        } else {
+          return [user,Promise.map([], getLinks)]
+        }
+      };
+      return User.findOne({username:userName})
+        .populate('preferences')
+        .then(mapPreferences)
+        .spread(function(user, preferences){
+          var result=user;
+          result.preferences = preferences;
+          delete result.username;
+          delete result.email;
+          delete result.createdAt;
+          delete result.updatedAt;
+          return  res.json(result);
         });
     }
   }

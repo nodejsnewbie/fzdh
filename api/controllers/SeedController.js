@@ -28,13 +28,24 @@ function processLink(link,next) {
 function addLink(link, category) {
   Link.findOrCreate({url:link.url,title:link.title,weight:link.weight})
     .populate('owners')
-    .exec(function (err,link) {
+    .exec(function (err,linkEntry) {
       if(err){
         sails.log(err);
       }
       else {
-        link.owners.add(category.id);
-        link.save(function (err) {
+        if(link.imagepath) {
+         var image=importImage(link.imagepath);
+          Link.update(linkEntry.id,{image:image})
+            .exec(function afterwards(err, updated){
+            if (err) {
+              // handle error here- e.g. `res.serverError(err);`
+              throw err;
+            }
+            console.log('Updated Link to have image ' + updated[0].image);
+          });
+        }
+        linkEntry.owners.add(category.id);
+        linkEntry.save(function (err) {
            if (err) {
              sails.log(err);
            }
@@ -50,27 +61,43 @@ function addLink(link, category) {
   // json['image']=importImage(link.imagePath);
 }
 function importImage(imagePath) {
+  try {
   sails.log(imagePath);
   var fs = require('fs');
   var path = require('path');
   var dst = path.resolve(sails.config.appPath, 'assets/images',path.basename(imagePath));
-  sails.log(dst);
   fs.writeFileSync(dst, fs.readFileSync(imagePath));
-  return dst;
+  } catch (err) {
+    sails.log(err);
+    throw err;
+  }
+  return  require('util').format('%s/%s','images', path.basename(imagePath))
 }
+// function isLinkExist(link,category){
+//   link.owners.forEach(function(owner) {
+//     sails.log("compare:")
+//     sails.log(owner.category);
+//     sails.log(category.category);
+//     if (owner.category == category.category) {
+//       sails.log(owner.category == category.category);
+//       return true;
+//     }
+//   });
+//   sails.log("hi");
+//   return false;
+// }
+
 function isLinkExist(link,category){
-  link.owners.forEach(function(owner) {
-    sails.log("compare:")
-    sails.log(owner.category);
-    sails.log(category.category);
+  var mark = false;
+  link.owners.forEach(function(owner)  {
     if (owner.category == category.category) {
-      sails.log(owner.category == category.category);
-      return true;
+      mark = true;
     }
   });
-  sails.log("hi");
-  return false;
+  return mark;
+  // return link.owners.every(owner=>owner.category === category.category)
 }
+
 function processPreference(preference) {
   sails.log(preference);
   Category.findOne({category:preference.category}).then(function (category){
@@ -157,9 +184,6 @@ function buildPreference(catalog,user,entry) {
            if(err){
               throw err;
            }
-          sails.log("findOrCreateLink:          ");
-          sails.log(findOrCreateLink);
-          sails.log("/findOrCreateLink");
           Category.findOne({id:category.id})
             .populate('links')
             .exec( function (err,myCategory) {
@@ -175,10 +199,7 @@ function buildPreference(catalog,user,entry) {
                   }
                 })
               })
-          sails.log('user:');
-          sails.log(user);
-          sails.log('-----------------user-----------------------');
-          Preference.findOrCreate({owner:user.id,category:entry.category,name:entry.name,xposition:parseInt(entry.xposition, 10),yposition:parseInt(entry.yposition, 10),link:findOrCreateLink.id})
+            Preference.findOrCreate({owner:user.id,category:entry.category,name:entry.name,xposition:parseInt(entry.xposition, 10),yposition:parseInt(entry.yposition, 10),link:findOrCreateLink.id})
             .exec(function (err,preference) {
               if(err){
                 throw err;
@@ -287,7 +308,6 @@ function getExcelToJson(fileName) {
 function processExcelData(file,iteratee) {
   sails.log("process file: "+file.filename);
   var exceltojson = getExcelToJson(file.filename);
-  // sails.log("exceltojson "+exceltojson.toString());
   exceltojson({
       input: file.fd,
       output: null, //since we don't need output.json
@@ -296,8 +316,6 @@ function processExcelData(file,iteratee) {
       if (err) {
        throw err;
       }
-      // res.json({error_code:0,err_desc:null, data: result});
-      // var i = 0;
     if((iteratee && typeof(iteratee) === "function")){
       async.eachSeries(result, iteratee, function afterwards (err) {
         if (err) {
