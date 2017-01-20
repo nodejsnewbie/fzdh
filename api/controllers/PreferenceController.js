@@ -83,7 +83,7 @@ module.exports = {
         return [preferenceData];
       })
       .spread(function (preferenceData) {
-          User.findOne({id:userid})
+          User.findOne({username:userid})
             .exec(function (err, user) {
             if(err) {
               sails.log(err);
