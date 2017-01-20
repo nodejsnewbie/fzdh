@@ -45,6 +45,15 @@ module.exports = {
               error: err
             });
       });
+  },
+  clearCatalog: function (req,res) {
+    Catalog.destroy({}).exec(function (err){
+      if (err) {
+        return res.negotiate(err);
+      }
+      sails.log('Catalog is empty.');
+      return res.json('Catalog 已经清空');
+    });
   }
 };
 

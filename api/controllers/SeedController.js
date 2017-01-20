@@ -447,14 +447,5 @@ module.exports = {
     if (req.method === 'GET')
       return res.json({ 'status': 'GET not allowed' });
     processExcel(req, res,processPreferences);
-  },
-  clearCatalog: function (req,res) {
-    Catalog.destroy({}).exec(function (err){
-      if (err) {
-        return res.negotiate(err);
-      }
-      sails.log('Catalog is empty.');
-      return res.ok();
-    });
   }
 };
