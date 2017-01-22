@@ -64,9 +64,12 @@ module.exports.routes = {
   'get /preference/user/:userName': 'PreferenceController.getUserPreferences',
   'get /preference/user/:userName/:category': 'PreferenceController.getUserPreferencesByCategory',
   'get /preference/:id ': 'PreferenceController.preference',
+  // 'post /preference/:catalog': 'PreferenceController.test',
+  'post /preference/:catalog': 'PreferenceController.modifyCatalogPreferences',
+  'post /preference/category/:category': 'PreferenceController.modifyCategoryPreferences',
   'get /defaultPreferences/:category': 'PreferenceController.getDefaultCategoryPreferences',
   'post /defaultPreferences/:category': 'PreferenceController.addDefaultCategoryPreferences',
-  'get /catalog/:id ': 'CatalogController.catalogList',
+  'get /catalog/:id': 'CatalogController.catalogList',
   'get /catalogs' : 'CatalogController.catalogs',
   'get /clearCatalog': 'CatalogController.clearCatalog'
   // If a request to a URL doesn't match any of the custom routes above,

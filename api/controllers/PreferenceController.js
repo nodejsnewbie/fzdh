@@ -132,6 +132,84 @@ module.exports = {
         res.json({notFound: true, error: err});
       });
   },
+  test: function (req, res) {
+    sails.log('modifyPreferences');
+    var catalog = req.param("catalog");
+    sails.log(catalog);
+    var userName = req.param("userName");
+    sails.log(userName);
+    // User.findOne({username: 'admin'})
+    //   .then(function (user) {
+    //     //If no user found
+    //     if (user === undefined)
+    //       return res.json({notFound: true});
+    //     // Store Preference Data
+    //     var preferenceData = Preference.find({owner: user.id})
+    //       .populate('link')
+    //       .then(function (preferences) {
+    //         var result = [];
+    //         preferences.forEach(function (preference) {
+    //           if (preference.category == category) {
+    //             var newEntry = preference;
+    //             result.push(newEntry);
+    //           }
+    //         })
+    //         sails.log(result);
+    //         return result;
+    //       })
+    //     return [preferenceData];
+    //   })
+    //   .spread(function (preferenceData) {
+    //       User.findOne({username:userid})
+    //         .exec(function (err, user) {
+    //         if(err) {
+    //           sails.log(err);
+    //           return res.json({success:false,err:err});
+    //         }
+    //         if(user===undefined) {
+    //           return res.json({success:false,err:'user not found'});
+    //         }
+    //         sails.log(user);
+    //         preferenceData.forEach(function (preference) {
+    //           var link= preference.link;
+    //           delete preference.owner;
+    //           delete preference.link;
+    //           delete preference.id;
+    //           delete preference.createdAt;
+    //           delete preference.updatedAt;
+    //           sails.log(preference);
+    //           Preference.create(preference)
+    //             .exec(function(err,entry){
+    //               if(err) {
+    //                 sails.log(err);
+    //                 // return res.json({success:false,err:err});
+    //               } else{
+    //               user.preferences.add(entry);
+    //               link.preferences.add(entry);
+    //               link.save(function (err) {
+    //                   if(err) {
+    //                     sails.log(err);
+    //                     return res.json({success:false,err:err});
+    //                   }
+    //                 })
+    //                 user.save(function (err) {
+    //                   if(err) {
+    //                     sails.log(err);
+    //                     return res.json({success:false,err:err});
+    //                   }
+    //                 })
+    //               }
+    //             })
+    //         })
+    //           return res.json({created: true, data: preferenceData});
+    //     })
+    //   })
+    //   .fail(function (err) {
+    //     console.log(err);
+    //     res.json({notFound: true, error: err});
+    //   });
+    return res.json({result:'looks good'});
+  },
 
   getDefaultCategoryPreferences: function (req, res) {
     var category = req.param("category");
@@ -173,14 +251,14 @@ module.exports = {
       .populate('preferences')
       .then( function(user){
          user.preferences.forEach(function (preference) {
-           var preferencese = Preference.find({
+           var preferences = Preference.find({
              "user": user.id
            })
              .populate('link')
-             .then(function (preferencese){
-               return preferencese;
+             .then(function (preferences){
+               return preferences;
              });
-           return [user, preferencese];
+           return [user, preferences];
          })
         })
       .spread(function(user, preferences){
@@ -217,29 +295,169 @@ module.exports = {
         }
       })
   },
-  test: function (req,res) {
-    sails.log('test');
-    var userId=req.param("userId");
-    User.findOne({username:userId})
-      .populateAll()
+  modifyCatalogPreferences: function (req,res) {
+    sails.log('modifyCatalogPreferences');
+    var catalog=req.param('catalog');
+    // sails.log(catalog);
+    var userName=req.param('userName');
+    // sails.log(userName);
+    var from =req.param("origin");
+    // sails.log(from);
+    var to =req.param("des");
+    // sails.log(to);
+    var toValue = parseInt(to,10);
+    var fromValue = parseInt(from,10);
+    var increase=toValue-fromValue;
+    if(increase==0) {
+      return res.json({success:false,msg:'no modification'})
+    }
+    var direction=increase > 0? 1: -1;
+    User.findOne({username:userName})
+      .populate('preferences')
       .then(function (user){
-         var preferencese= Preference.find({
-          "user": user.id
+        if(user===undefined) {
+          return  res.json({err:'user is not exist'});
+        }
+        var preferenceData=[];
+        user.preferences.forEach(function (preference) {
+          var originPosition = parseInt(preference.yposition, 10);
+          if(preference.name == catalog) {
+             sails.log(increase);
+             sails.log(fromValue);
+             sails.log(originPosition);
+             sails.log(toValue);
+             sails.log(direction);
+             if (originPosition == fromValue) {
+                  preference.yposition = toValue;
+                  preferenceData.push(preference);
+                  sails.log('preference goto des');
+                  sails.log(preference);
+                } else if (increase * direction >= (originPosition - fromValue) * direction) {
+                  preference.yposition = originPosition - direction;
+                  sails.log('preference goto new position');
+                  sails.log(preference);
+                  preferenceData.push(preference);
+                }
+                else {
+                  sails.log("stay unmodified");
+                  sails.log(preference);
+                }
+              }
+        // sails.log( user.preferences);
+        // return  user.preferences;
         })
-          .populate('link')
-          .then(function (preferencese){
-            sails.log(preferencese);
-            return preferencese;
-          });
-        return [user, preferencese];
+        return [preferenceData];
       })
-      .spread(function (user, preferencese){
-        // user.preferencese = preferencese; // This won't work....
-        res.json(user);
+      .spread(function (preferenceData){
+        preferenceData.forEach(function (preference) {
+          Preference.findOne(preference.id)
+            .then(function (found) {
+            found.yposition=preference.yposition;
+            found.save(function (err) {
+              if (err) {
+                sails.log(err);
+                return res.json({success: false, err: err});
+              }
+            })
+          })
+        })
+        res.json(preferenceData);
       }).catch(function (err){
-      if (err) return res.serverError(err);
-    });
+        if (err) return res.serverError(err);
+      })
   },
+  modifyCategoryPreferences: function (req, res) {
+    sails.log('modifyCategoryPreferences');
+    var columNumber=4;
+    var category=req.param('category');
+    // sails.log(category);
+    var userName=req.param('userName');
+    // sails.log(userName);
+    var x_from =req.param("x_origin");
+    var y_from =req.param("y_origin");
+    // sails.log(from);
+    var x_to =req.param("x_des");
+    var y_to =req.param("y_des");
+    // sails.log(to);
+    var x_fromValue = parseInt(x_from,10);
+    var y_fromValue = parseInt(y_from,10);
+    var x_toValue = parseInt(x_to,10);
+    var y_toValue = parseInt(y_to,10);
+    var increase=y_toValue*(columNumber)+x_toValue-y_fromValue*(columNumber)+x_fromValue;
+    if(increase==0) {
+      return res.json({success:false,msg:'no modification'})
+    }
+    var direction=increase > 0? 1: -1;
+    User.findOne({username:userName})
+      .populate('preferences')
+      .then(function (user){
+        if(user===undefined) {
+          return  res.json({err:'user is not exist'});
+        }
+        var preferenceData=[];
+        user.preferences.forEach(function (preference) {
+          var x_originPosition = parseInt(preference.xposition, 10);
+          var y_originPosition = parseInt(preference.yposition, 10);
+          var originPosition=y_originPosition*columNumber+x_originPosition;
+          var fromValue=y_fromValue*columNumber+x_fromValue;
+          if(preference.category == category) {
+             sails.log(increase);
+             sails.log(x_fromValue);
+             sails.log(y_fromValue);
+            sails.log(originPosition);
+             sails.log(x_toValue);
+             sails.log(y_toValue);
+             sails.log(direction);
+             sails.log(preference);
+             if (originPosition == fromValue) {
+               preference.yposition = y_toValue;
+               preference.xposition = x_toValue;
+               preferenceData.push(preference);
+               sails.log('preference goto des');
+               sails.log(preference);
+             } else if (increase * direction >= (originPosition - fromValue) * direction) {
+               preference.xposition = x_originPosition - direction ;
+               if(preference.xposition<0) {
+                 preference.xposition=columNumber-1;
+                 preference.yposition = y_originPosition - 1;
+               } else if(preference.xposition>columNumber-1) {
+                 preference.xposition=0;
+                 preference.yposition = y_originPosition + 1;
+               }
+               sails.log('preference goto new position');
+               sails.log(preference);
+               preferenceData.push(preference);
+             }
+             else {
+               sails.log("stay unmodified");
+               sails.log(preference);
+             }
+          }
+        // sails.log( user.preferences);
+        // return  user.preferences;
+        })
+        return [preferenceData];
+      })
+      .spread(function (preferenceData){
+        preferenceData.forEach(function (preference) {
+          Preference.findOne(preference.id)
+            .then(function (found) {
+            found.yposition=preference.yposition;
+            found.xposition=preference.xposition;
+            found.save(function (err) {
+              if (err) {
+                sails.log(err);
+                return res.json({success: false, err: err});
+              }
+            })
+          })
+        })
+        res.json(preferenceData);
+      }).catch(function (err){
+        if (err) return res.serverError(err);
+      })
+  },
+
   getDefaultPreferencesByCategory: function (req, res){   //据用户id获取其偏好
     var id=req.param("categoryId");
     User.findOne({id:id})
