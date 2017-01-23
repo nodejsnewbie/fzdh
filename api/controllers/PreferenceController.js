@@ -360,7 +360,7 @@ module.exports = {
             })
           })
         })
-        res.json({success:true});
+        res.json({success:true,err:null});
       }).catch(function (err){
         if (err) return res.json({success: false, err: err});
       })
@@ -391,7 +391,8 @@ module.exports = {
       .populate('preferences')
       .then(function (user){
         if(user===undefined) {
-          return  res.json({err:'user is not exist'});
+         throw new Error("user is not exist")
+          // return  res.json({err:'user is not exist'});
         }
         var preferenceData=[];
         user.preferences.forEach(function (preference) {
@@ -400,20 +401,20 @@ module.exports = {
           var originPosition=y_originPosition*columNumber+x_originPosition;
           var fromValue=y_fromValue*columNumber+x_fromValue;
           if(preference.category == category) {
-             sails.log(increase);
-             sails.log(x_fromValue);
-             sails.log(y_fromValue);
-            sails.log(originPosition);
-             sails.log(x_toValue);
-             sails.log(y_toValue);
-             sails.log(direction);
-             sails.log(preference);
+            //  sails.log(increase);
+            //  sails.log(x_fromValue);
+            //  sails.log(y_fromValue);
+            // sails.log(originPosition);
+            //  sails.log(x_toValue);
+            //  sails.log(y_toValue);
+            //  sails.log(direction);
+            //  sails.log(preference);
              if (originPosition == fromValue) {
                preference.yposition = y_toValue;
                preference.xposition = x_toValue;
                preferenceData.push(preference);
-               sails.log('preference goto des');
-               sails.log(preference);
+               // sails.log('preference goto des');
+               // sails.log(preference);
              } else if (increase *direction>0 && increase * direction >= (originPosition - fromValue) * direction) {
                preference.xposition = x_originPosition - direction ;
                if(preference.xposition<0) {
@@ -423,14 +424,14 @@ module.exports = {
                  preference.xposition=0;
                  preference.yposition = y_originPosition + 1;
                }
-               sails.log('preference goto new position');
-               sails.log(preference);
+               // sails.log('preference goto new position');
+               // sails.log(preference);
                preferenceData.push(preference);
              }
-             else {
-               sails.log("stay unmodified");
-               sails.log(preference);
-             }
+             // else {
+             //   sails.log("stay unmodified");
+             //   sails.log(preference);
+             // }
           }
         // sails.log( user.preferences);
         // return  user.preferences;
@@ -445,15 +446,16 @@ module.exports = {
             found.xposition=preference.xposition;
             found.save(function (err) {
               if (err) {
-                sails.log(err);
-                return res.json({success: false, err: err});
+                // sails.log(err);
+                // return res.json({success: false, err: err});
+                throw err;
               }
             })
           })
         })
-        res.json(preferenceData);
+        res.json({success: false, err: null});
       }).catch(function (err){
-        if (err) return res.serverError(err);
+        if (err) return res.json({success: false, err: err});
       })
   },
 
