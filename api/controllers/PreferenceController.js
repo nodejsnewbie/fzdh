@@ -332,7 +332,7 @@ module.exports = {
                   preferenceData.push(preference);
                   sails.log('preference goto des');
                   sails.log(preference);
-                } else if (increase * direction >= (originPosition - fromValue) * direction) {
+                } else if (increase * direction >= (originPosition - fromValue) * direction && increase *direction>=0) {
                   preference.yposition = originPosition - direction;
                   sails.log('preference goto new position');
                   sails.log(preference);
@@ -415,7 +415,7 @@ module.exports = {
                preferenceData.push(preference);
                sails.log('preference goto des');
                sails.log(preference);
-             } else if (increase * direction >= (originPosition - fromValue) * direction) {
+             } else if (increase *direction>0 && increase * direction >= (originPosition - fromValue) * direction) {
                preference.xposition = x_originPosition - direction ;
                if(preference.xposition<0) {
                  preference.xposition=columNumber-1;
