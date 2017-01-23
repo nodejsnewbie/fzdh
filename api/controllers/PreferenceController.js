@@ -285,7 +285,6 @@ module.exports = {
                   sails.log(err);
                   throw err;
                 }
-
               });
           })
           return  res.json(user.preferences);
@@ -300,48 +299,46 @@ module.exports = {
     var catalog=req.param('catalog');
     sails.log(catalog);
     var userName=req.param('userName');
-    // sails.log(userName);
+    sails.log(userName);
     var from =req.param("origin");
     // sails.log(from);
     var to =req.param("des");
     // sails.log(to);
     var toValue = parseInt(to,10);
     var fromValue = parseInt(from,10);
-    var increase=toValue-fromValue;
-    if(increase==0) {
-      return res.json({success:false,msg:'no modification'})
+    if(toValue-fromValue==0) {
+      return res.json({success:false,err:'no modification'})
     }
-    var direction=increase > 0? 1: -1;
+    var increase=toValue-fromValue > 0? 1: -1;
     User.findOne({username:userName})
       .populate('preferences')
       .then(function (user){
         if(user===undefined) {
-         throw new Error('user is not exist');
+         throw new Error("user is not exist");
         }
         var preferenceData=[];
         user.preferences.forEach(function (preference) {
           var originPosition = parseInt(preference.yposition, 10);
           if(preference.name == catalog) {
-             // sails.log(increase);
-             // sails.log(fromValue);
-             // sails.log(originPosition);
-             // sails.log(toValue);
-             // sails.log(direction);
+             sails.log(fromValue);
+             sails.log(originPosition);
+             sails.log(toValue);
+             sails.log(increase);
              if (originPosition == fromValue) {
                   preference.yposition = toValue;
                   preferenceData.push(preference);
-                  // sails.log('preference goto des');
-                  // sails.log(preference);
-                } else if (increase * direction >= (originPosition - fromValue) * direction && increase *direction>=0) {
-                  preference.yposition = originPosition - direction;
-                  // sails.log('preference goto new position');
-                  // sails.log(preference);
+                  sails.log('preference goto des');
+                  sails.log(preference);
+                } else if ((originPosition - fromValue) * (originPosition - toValue) <=0 ) {
+                  preference.yposition = originPosition - increase;
+                  sails.log('preference goto new position');
+                  sails.log(preference);
                   preferenceData.push(preference);
                 }
-                // else {
-                //   sails.log("stay unmodified");
-                //   sails.log(preference);
-                // }
+                else {
+                  sails.log("stay unmodified");
+                  sails.log(preference);
+                }
               }
         // sails.log( user.preferences);
         // return  user.preferences;
@@ -362,7 +359,7 @@ module.exports = {
         })
         res.json({success:true,err:null});
       }).catch(function (err){
-        if (err) return res.json({success: false, err: err});
+         res.json({success: false, err: err});
       })
   },
   modifyCategoryPreferences: function (req, res) {
@@ -400,6 +397,7 @@ module.exports = {
           var y_originPosition = parseInt(preference.yposition, 10);
           var originPosition=y_originPosition*columNumber+x_originPosition;
           var fromValue=y_fromValue*columNumber+x_fromValue;
+          var toValue=y_toValue*columNumber+x_toValue;
           if(preference.category == category) {
             //  sails.log(increase);
             //  sails.log(x_fromValue);
@@ -415,7 +413,7 @@ module.exports = {
                preferenceData.push(preference);
                // sails.log('preference goto des');
                // sails.log(preference);
-             } else if (increase *direction>0 && increase * direction >= (originPosition - fromValue) * direction) {
+             } else if ((originPosition - fromValue) * (originPosition - toValue) <=0 ) {
                preference.xposition = x_originPosition - direction ;
                if(preference.xposition<0) {
                  preference.xposition=columNumber-1;
