@@ -298,7 +298,7 @@ module.exports = {
   modifyCatalogPreferences: function (req,res) {
     sails.log('modifyCatalogPreferences');
     var catalog=req.param('catalog');
-    // sails.log(catalog);
+    sails.log(catalog);
     var userName=req.param('userName');
     // sails.log(userName);
     var from =req.param("origin");
@@ -316,32 +316,32 @@ module.exports = {
       .populate('preferences')
       .then(function (user){
         if(user===undefined) {
-          return  res.json({err:'user is not exist'});
+         throw new Error('user is not exist');
         }
         var preferenceData=[];
         user.preferences.forEach(function (preference) {
           var originPosition = parseInt(preference.yposition, 10);
           if(preference.name == catalog) {
-             sails.log(increase);
-             sails.log(fromValue);
-             sails.log(originPosition);
-             sails.log(toValue);
-             sails.log(direction);
+             // sails.log(increase);
+             // sails.log(fromValue);
+             // sails.log(originPosition);
+             // sails.log(toValue);
+             // sails.log(direction);
              if (originPosition == fromValue) {
                   preference.yposition = toValue;
                   preferenceData.push(preference);
-                  sails.log('preference goto des');
-                  sails.log(preference);
+                  // sails.log('preference goto des');
+                  // sails.log(preference);
                 } else if (increase * direction >= (originPosition - fromValue) * direction && increase *direction>=0) {
                   preference.yposition = originPosition - direction;
-                  sails.log('preference goto new position');
-                  sails.log(preference);
+                  // sails.log('preference goto new position');
+                  // sails.log(preference);
                   preferenceData.push(preference);
                 }
-                else {
-                  sails.log("stay unmodified");
-                  sails.log(preference);
-                }
+                // else {
+                //   sails.log("stay unmodified");
+                //   sails.log(preference);
+                // }
               }
         // sails.log( user.preferences);
         // return  user.preferences;
@@ -355,15 +355,14 @@ module.exports = {
             found.yposition=preference.yposition;
             found.save(function (err) {
               if (err) {
-                sails.log(err);
-                return res.json({success: false, err: err});
+               throw err;
               }
             })
           })
         })
-        res.json(preferenceData);
+        res.json({success:true});
       }).catch(function (err){
-        if (err) return res.serverError(err);
+        if (err) return res.json({success: false, err: err});
       })
   },
   modifyCategoryPreferences: function (req, res) {
