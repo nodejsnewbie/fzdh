@@ -239,5 +239,18 @@ module.exports = {
       var processor=processorFactory(user);
       ExcelService.processExcel(filename,processor);
   })
+  },
+  copyFile:function (soure,dest) {
+    var fs = require('fs');
+    var path = require('path');
+    //
+    // var fileName = "coverflow-3.0.1.zip";
+    //
+    // var sourceFile = path.join(__dirname, fileName);
+    // var destPath = path.join(__dirname, "dest", fileName);
+    var readStream = fs.createReadStream(soure);
+    var writeStream = fs.createWriteStream(dest);
+    readStream.pipe(writeStream);
+    console.log("拷贝完成")
   }
 }

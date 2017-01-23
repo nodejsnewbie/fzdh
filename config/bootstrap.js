@@ -23,8 +23,12 @@ module.exports.bootstrap = function(cb) {
   //       return cb();
   //     } })
   var fileName=path.join(path.dirname(__filename) ,'..','assets','initConfigFile','catalog.xlsx');
+  var dest=path.join(path.dirname(__filename) ,'..','assets','uploadFiles','catalog.xlsx');
+  ExcelService.copyFile(fileName,dest);
   ExcelService.initCatalog(fileName);
-   fileName=path.join(path.dirname(__filename) ,'..','assets','initConfigFile','preference.xlsx');
+  fileName=path.join(path.dirname(__filename) ,'..','assets','initConfigFile','preference.xlsx');
+  dest=path.join(path.dirname(__filename) ,'..','assets','uploadFiles','preference.xlsx');
+  ExcelService.copyFile(fileName,dest);
   ExcelService.initDefaultPreference('admin',fileName);
   sails.services.passport.loadStrategies();
   cb();
