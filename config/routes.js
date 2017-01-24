@@ -71,7 +71,9 @@ module.exports.routes = {
   'post /defaultPreferences/:category': 'PreferenceController.addDefaultCategoryPreferences',
   'get /catalog/:id': 'CatalogController.catalogList',
   'get /catalogs' : 'CatalogController.catalogs',
-  'get /clearCatalog': 'CatalogController.clearCatalog'
+  'delete /clearCatalog': 'CatalogController.clearCatalog',
+  'delete /clearPreference': 'PreferenceController.clearPreferences',
+  'post /initPreference': 'PreferenceController.initPreferences'
   // If a request to a URL doesn't match any of the custom routes above,
   // it is matched against Sails route blueprints.  See `config/blueprints.js`
   // for configuration options and examples.

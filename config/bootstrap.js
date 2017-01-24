@@ -22,14 +22,10 @@ module.exports.bootstrap = function(cb) {
   //       console.log('Number of video records: ', numVideos);
   //       return cb();
   //     } })
-  var fileName=path.join(path.dirname(__filename) ,'..','assets','initConfigFile','catalog.xlsx');
-  var dest=path.join(path.dirname(__filename) ,'..','assets','uploadFiles','catalog.xlsx');
-  ExcelService.copyFile(fileName,dest);
-  ExcelService.initCatalog(fileName);
-  fileName=path.join(path.dirname(__filename) ,'..','assets','initConfigFile','preference.xlsx');
-  dest=path.join(path.dirname(__filename) ,'..','assets','uploadFiles','preference.xlsx');
-  ExcelService.copyFile(fileName,dest);
-  ExcelService.initDefaultPreference('admin',fileName);
+
+  ExcelService.copyFiles();
+  ExcelService.initCatalog();
+  ExcelService.initDefaultPreference(sails.config.serviceConfig.defaultUser);
   sails.services.passport.loadStrategies();
   cb();
 };
