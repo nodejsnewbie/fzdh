@@ -31,6 +31,7 @@ function addLink(link, category) {
     .exec(function (err,linkEntry) {
       if(err){
         sails.log(err);
+        throw err;
       }
       else {
         if(link.imagepath) {
@@ -44,21 +45,33 @@ function addLink(link, category) {
             console.log('Updated Link to have image ' + updated[0].image);
           });
         }
+        if(link.classification) {
+          console.log('find classification:'+ link.classification);
+          Classification.findOrCreate({classification:link.classification})
+            .exec(function (err,classification) {
+             if(err) {
+               sails.log(err);
+               throw err;
+             } else {
+               classification.sites.add(linkEntry.id);
+               classification.save(function (err) {
+                 if (err) {
+                   sails.log(err);
+                   throw err;
+                 }
+               });
+             }
+          })
+        }
         linkEntry.owners.add(category.id);
         linkEntry.save(function (err) {
            if (err) {
              sails.log(err);
+             throw err;
            }
          });
       }
     })
-  // var json = {};
-  // json['title'] = link.titile;
-  // json['url'] = link.url;
-  // json['weight'] = link.weight;
-  // if(link.imagePath) {
-  //   sails.log('importImage...');
-  // json['image']=importImage(link.imagePath);
 }
 function importImage(imagePath) {
   try {
@@ -341,9 +354,24 @@ function processExcel(req, res,callback) {
     maxBytes: 5 * 1024 * 1024 //5 MB
   }, function onUploadComplete(err, files) {
     var file = files[0];
-    // fs.rename(file.filename, "your_folder/" +files[0].filename, function(err){
-    //   sails.log(err);
-    // });
+    try {
+      processExcelData(file,callback);
+      return res.json({result: "Data seeded"});
+    }
+    catch (ex) {
+      return res.json({error_code: 1, err_desc: ex.toString()});
+    }
+  });
+}
+function process(req, res) {
+  var uploadFile = req.file('uploadFile');
+  var filename = uploadFile._files[0].stream.filename;
+  uploadFile.upload({
+    dirname: require('path').resolve(sails.config.appPath, 'assets/uploadFiles'),
+    saveAs: filename, /* optional. default file name */
+    maxBytes: 5 * 1024 * 1024 //5 MB
+  }, function onUploadComplete(err, files) {
+    var file = files[0];
     try {
       processExcelData(file,callback);
       return res.json({result: "Data seeded"});

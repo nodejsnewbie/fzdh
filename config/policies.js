@@ -45,6 +45,9 @@ module.exports.policies = {
   'link': {
     '*': ['passport']
   },
+  'classification': {
+    '*': ['passport']
+  },
   'auth': {
     '*': ['passport']
   }

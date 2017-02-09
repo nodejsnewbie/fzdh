@@ -31,6 +31,10 @@ module.exports = {
     owners: {
        collection: 'Category',
        via: 'links'
+    },
+    classifications: {
+       collection: 'Classification',
+       via: 'sites'
     }
 
   }
