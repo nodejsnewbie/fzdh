@@ -41,7 +41,7 @@ function addLink(link, category) {
               Link.update(linkEntry.id,{image:image})
                 .exec(function afterwards(err, updated){
                   if (err) {
-                    callback(err, 'link.imagepath');
+                    throw err;
                   }
                   console.log('Updated Link to have image ' + updated[0].image);
                 });
@@ -60,9 +60,6 @@ function addLink(link, category) {
                     }
                   });
                 })
-                .catch(function (err) {
-                  callback(err,'link.classification');
-                })
             }
             callback(null,'link.classification');
           },
@@ -70,14 +67,16 @@ function addLink(link, category) {
             linkEntry.owners.add(category.id);
             linkEntry.save(function (err) {
               if (err) {
-                callback(err,'linkEntry.owners.add');
+               throw err;
               }
             });
             callback(null,'linkEntry.owners.add');
           }
 
         ]), function(err, results) {
-          sails.log('don results!!!!!!!!!!!!!!!!!!');
+          if(err) {
+          sails.log(err);
+          }
           sails.log(results);
         };
       }
