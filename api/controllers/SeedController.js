@@ -41,8 +41,7 @@ function addLink(link, category) {
               Link.update(linkEntry.id,{image:image})
                 .exec(function afterwards(err, updated){
                   if (err) {
-                    // handle error here- e.g. `res.serverError(err);`
-                    throw err;
+                    callback(err, 'link.imagepath');
                   }
                   console.log('Updated Link to have image ' + updated[0].image);
                 });
@@ -78,6 +77,7 @@ function addLink(link, category) {
           }
 
         ]), function(err, results) {
+          sails.log('don results!!!!!!!!!!!!!!!!!!');
           sails.log(results);
         };
       }
