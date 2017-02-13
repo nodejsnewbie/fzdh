@@ -21,6 +21,7 @@ function processLink(link,next) {
     }
   }) .catch(function (err) {
     sails.log(err);
+    throw err;
   })
   return next();
 }
@@ -30,48 +31,58 @@ function addLink(link, category) {
     .populate('owners')
     .exec(function (err,linkEntry) {
       if(err){
-        sails.log(err);
         throw err;
       }
       else {
-        if(link.imagepath) {
-         var image=importImage(link.imagepath);
-          Link.update(linkEntry.id,{image:image})
-            .exec(function afterwards(err, updated){
-            if (err) {
-              // handle error here- e.g. `res.serverError(err);`
-              throw err;
+        async.series([
+          function(callback) {
+            if(link.imagepath) {
+              var image=importImage(link.imagepath);
+              Link.update(linkEntry.id,{image:image})
+                .exec(function afterwards(err, updated){
+                  if (err) {
+                    // handle error here- e.g. `res.serverError(err);`
+                    throw err;
+                  }
+                  console.log('Updated Link to have image ' + updated[0].image);
+                });
             }
-            console.log('Updated Link to have image ' + updated[0].image);
-          });
-        }
-        if(link.classification) {
-          console.log('find classification:'+ link.classification);
-          Classification.findOrCreate({classification:link.classification})
-            .exec(function (err,classification) {
-             if(err) {
-               sails.log(err);
-               throw err;
-             } else {
-               classification.sites.add(linkEntry.id);
-               classification.save(function (err) {
-                 if (err) {
-                   sails.log(err);
-                   throw err;
-                 }
-               });
-             }
-          })
-        }
-        linkEntry.owners.add(category.id);
-        linkEntry.save(function (err) {
-           if (err) {
-             sails.log(err);
-             throw err;
-           }
-         });
+            callback(null, 'link.imagepath');
+          },
+          function(callback) {
+            if(link.classification) {
+              console.log('find classification:'+ link.classification);
+              Classification.findOrCreate({classification:link.classification})
+                .then(function (classification) {
+                  classification.sites.add(linkEntry.id);
+                  classification.save(function (err) {
+                    if (err) {
+                      throw err;
+                    }
+                  });
+                })
+                .catch(function (err) {
+                  callback(err,'link.classification');
+                })
+            }
+            callback(null,'link.classification');
+          },
+          function(callback) {
+            linkEntry.owners.add(category.id);
+            linkEntry.save(function (err) {
+              if (err) {
+                callback(err,'linkEntry.owners.add');
+              }
+            });
+            callback(null,'linkEntry.owners.add');
+          }
+
+        ]), function(err, results) {
+          sails.log(results);
+        };
       }
     })
+
 }
 function importImage(imagePath) {
   try {
