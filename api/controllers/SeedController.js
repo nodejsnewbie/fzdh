@@ -19,9 +19,6 @@ function processLink(link,next) {
     } else {
       addLink(link, category);
     }
-  }) .catch(function (err) {
-    sails.log(err);
-    throw err;
   })
   return next();
 }
@@ -36,6 +33,8 @@ function addLink(link, category) {
       else {
         async.series([
           function(callback) {
+            sails.log('imagepath ');
+            sails.log(linkEntry);
             if(link.imagepath) {
               var image=importImage(link.imagepath);
               Link.update(linkEntry.id,{image:image})
@@ -46,11 +45,15 @@ function addLink(link, category) {
                   console.log('Updated Link to have image ' + updated[0].image);
                 });
             }
+            sails.log('imagepath done');
             callback(null, 'link.imagepath');
           },
           function(callback) {
+            sails.log('classification ');
             if(link.classification) {
-              console.log('find classification:'+ link.classification);
+              sails.log('find classification, link:');
+              sails.log(link);
+              sails.log(linkEntry);
               Classification.findOrCreate({classification:link.classification})
                 .then(function (classification) {
                   classification.sites.add(linkEntry.id);
@@ -61,27 +64,30 @@ function addLink(link, category) {
                   });
                 })
             }
+            sails.log('classification done');
             callback(null,'link.classification');
           },
           function(callback) {
+            sails.log('linkEntry.owners.add(category.id)');
             linkEntry.owners.add(category.id);
             linkEntry.save(function (err) {
               if (err) {
                throw err;
               }
             });
+            sails.log('linkEntry.owners.add(category.id)   done');
             callback(null,'linkEntry.owners.add');
           }
 
-        ]), function(err, results) {
+        ], function(err, results) {
           if(err) {
           sails.log(err);
           }
+          sails.log("results");
           sails.log(results);
-        };
+        })
       }
     })
-
 }
 function importImage(imagePath) {
   try {
