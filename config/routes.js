@@ -57,6 +57,7 @@ module.exports.routes = {
     view: 'importPreferences'
   },
   'get /users': 'SystemController.users',
+  'get /classifications': 'ClassificationController.getClassifications',
   'get /version': 'SystemController.version',
   'get /category': 'CategoryController.categories',
   'get /category/:id/links': 'CategoryController.categoryList',
