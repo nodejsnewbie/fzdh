@@ -15,7 +15,6 @@ module.exports = {
         result.forEach(function (classification) {
           delete classification.createdAt;
           delete classification.updatedAt;
-          delete classification.id;
           classification.sites.forEach(function (site) {
             delete site.createdAt;
             delete site.updatedAt;
