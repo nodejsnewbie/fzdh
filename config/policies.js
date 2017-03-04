@@ -33,6 +33,9 @@ module.exports.policies = {
   'seed': {
     '*': ['passport', 'sessionAuth']
   },
+  'system': {
+    '*': ['passport', 'sessionAuth']
+  },
   'category': {
     '*': ['passport']
   },

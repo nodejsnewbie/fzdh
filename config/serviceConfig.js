@@ -5,5 +5,8 @@ module.exports.serviceConfig = {
   defaultUser:'admin',
   anyobject: {
     bar: "foo"
+  },
+  disableColums:{
+    appDownlaod:true
   }
 };
