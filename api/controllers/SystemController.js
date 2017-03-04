@@ -14,6 +14,9 @@ module.exports = {
       version: '0.1'
     });
   },
+  globalSettings: function (req, res) {   //根据用户id获取配置
+    return res.json(sails.config.serviceConfig);
+  },
   users: function(req, res) {
     User.find({})
       .then(function (users) {
